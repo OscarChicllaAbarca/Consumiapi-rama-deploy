@@ -3,7 +3,7 @@ const { defineConfig } = require('@vue/cli-service');
 module.exports = defineConfig({
   transpileDependencies: true,
   publicPath: process.env.NODE_ENV === 'production'
-    ? '/Consumiapi/' 
+    ? '/Consumiapi-rama-deploy/' 
     : '/',
   chainWebpack: (config) => {
     // Agregar un rule para manejar los archivos .glb
