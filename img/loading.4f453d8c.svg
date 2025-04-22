@@ -1,0 +1,35 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="225.000000pt" height="225.000000pt" 
+    viewBox="0 0 225.000000 225.000000" preserveAspectRatio="xMidYMid meet">
+
+     <g transform="translate(0.000000,225.000000) scale(0.100000,-0.100000)" fill="white" stroke="limegreen" stroke-width="20">
+      
+      <!-- Borde principal con efecto de línea continua en movimiento más fluida -->
+      <path d="M470 1247 l0 -532 118 -118 117 -117 533 0 532 0 0 532 0 533 -117 117 -118 118 -532 0 -533 0 0 -533z" 
+          fill="none" stroke="limegreen" stroke-width="65" stroke-linecap="round" 
+          stroke-dasharray="2600 500" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-3000" dur="3s" repeatCount="indefinite" calcMode="linear" />
+      </path>
+
+      <!-- Primer área de carga con efecto de pulsación -->
+      <path d="M1548 1546 l82 -84 0 -421 0 -422 -122 3 -123 3 -3 383 -2 382 -380 0 -380 0 0 120 0 120 423 0 423 0 82 -84z" 
+          fill="transparent">
+        <animate attributeName="fill" values="transparent;limegreen;transparent" dur="2.5s" repeatCount="indefinite" begin="0.5s" />
+      </path>
+
+      <!-- Segunda área de carga con un efecto de transición suave -->
+      <path d="M1290 980 l0 -336 -122 3 -123 3 -3 213 -2 212 -210 0 -210 0 0 120 0 120 335 0 335 0 0 -335z" 
+          fill="transparent">
+        <animate attributeName="fill" values="transparent;limegreen;transparent" dur="2.5s" repeatCount="indefinite" begin="1.5s" />
+      </path>
+
+      <!-- Tercera área de carga con un parpadeo más sutil -->
+      <path d="M950 844 l0 -165 -81 0 -81 0 -84 82 -84 82 0 83 0 83 165 0 165 0 0 -165z" 
+          fill="transparent">
+        <animate attributeName="fill" values="transparent;limegreen;transparent" dur="2.5s" repeatCount="indefinite" begin="2s" />
+      </path>
+
+    </g>
+</svg>
