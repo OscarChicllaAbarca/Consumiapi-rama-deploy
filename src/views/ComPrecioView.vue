@@ -449,7 +449,8 @@
                 codigoInventario: '',
                 datos: [],
                 datosFiltrados: [], // Datos filtrados según los filtros
-                codigosInventario: ['INVINOP202543', 'INVCICL202532', 'INVCICL202554', 'INVCICL202565', 'INVCICL202576', 'INVCICL202521', 'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110'],
+                codigosInventario: ['INVINOP202543', 'INVCICL202532', 'INVCICL202554', 'INVCICL202565', 'INVCICL202576', 'INVCICL202521',
+                 'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110','INVCICL20251211','INVCICL20251312','INVCICL20251413','INVCICL20251514'],
     
                 filtroEstado: '', // Estado seleccionado en el filtro
                 filtroProducto: '', // Producto seleccionado en el filtro

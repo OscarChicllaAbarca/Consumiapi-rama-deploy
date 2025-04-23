@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import ListInventView from '@/views/ListInventView.vue';
 import InsertInventariadoView from '@/views/InsertInventariadoView.vue';
 import TomaView from '../views/TomaView.vue';
@@ -20,7 +20,7 @@ import UserDashboardView from '@/views/UserDashboardView.vue';
 import { Path } from 'three';
 import axios from "axios";
 import config from "@/config"; // Ajusta la ruta de tu configuración
-import store from '@/store'; // Asegúrate de importar tu store si estás fuera del setup
+import store from '@/store'; 
 
 const routes = [
   {
@@ -120,7 +120,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHashHistory(process.env.BASE_URL),
   routes
 });
 
