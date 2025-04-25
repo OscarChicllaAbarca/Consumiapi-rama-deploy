@@ -93,7 +93,7 @@
                     <template v-if="hasAdminRole || hasSuperRole" >  
                         <li>
                             <router-link to="/ComPrecio" class="dropdown-item">
-                                <i class="fas fa-cogs"></i> Comparativo Precio
+                                <i class="fas fa-cogs"></i> Comparativo de Precio
                             </router-link>
                         </li>
                         <li>
@@ -104,6 +104,11 @@
                         <li>
                             <router-link to="/powerBI" class="dropdown-item">
                                 <i class="fas fa-chart-bar"></i> Reporte Completo
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link to="/ComProducto" class="dropdown-item">
+                                <i class="fas fa-box"></i> Comparativo de Productos
                             </router-link>
                         </li>
                     </template>

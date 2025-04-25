@@ -17,6 +17,7 @@ import Reportebi from '@/views/reportebi.vue';
 import RepotTimeView from '@/views/RepotTimeView.vue';
 import AsistenciaView from '@/views/AsistenciaView.vue';
 import UserDashboardView from '@/views/UserDashboardView.vue';
+import ComProductoView from '@/views/ComProductoView.vue';
 import { Path } from 'three';
 import axios from "axios";
 import config from "@/config"; // Ajusta la ruta de tu configuración
@@ -116,6 +117,11 @@ const routes = [
   path: '/UserDashboard',
   name: 'UserDashboard',
   component: UserDashboardView,meta:{requiresAuth: true }
+  },
+  {
+  path: '/ComProducto',
+  name: 'ComProducto',
+  component: ComProductoView,meta:{requiresAuth: true }
   }
 ];
 
