@@ -147,6 +147,7 @@
 <script>
 // Importamos XLSX para procesar archivos Excel
 import * as XLSX from 'xlsx';
+import config from '../config';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import axios from 'axios'; // Importamos axios para hacer llamadas HTTP
@@ -524,7 +525,7 @@ export default {
         this.tomasError = null;
 
         // Construir la URL de la API con el código del producto
-        const apiUrl = `http://localhost:9090/api/report?producto=${encodeURIComponent(productCode)}`;
+        const apiUrl = `${config.BASE_URL}/api/report?producto=${encodeURIComponent(productCode)}`;
 
         // Realizar la llamada a la API con withCredentials para enviar cookies
         const response = await axios.get(apiUrl, {
@@ -556,8 +557,8 @@ export default {
             console.log(`Consultando observaciones para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}, estado: ${producto.estado}`);
             
             // Construir la URL para la API de observaciones
-            const apiUrl = `http://localhost:9090/api/observaciones/filtrar?codigo_inventario_pro=${encodeURIComponent(producto.codigoInventario)}&lote_pro=${encodeURIComponent(producto.lote)}&producto=${encodeURIComponent(producto.producto)}&estado_pro=${encodeURIComponent(producto.estado)}`;
-            
+            const apiUrl = `${config.BASE_URL}/api/observaciones/filtrar?codigo_inventario_pro=${encodeURIComponent(producto.codigoInventario)}&lote_pro=${encodeURIComponent(producto.lote)}&producto=${encodeURIComponent(producto.producto)}&estado_pro=${encodeURIComponent(producto.estado)}`;
+
             // Realizar la llamada a la API con withCredentials para enviar cookies
             const response = await axios.get(apiUrl, {
               withCredentials: true
@@ -594,8 +595,8 @@ export default {
             console.log(`Consultando tomas para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}`);
             
             // Construir la URL para la API de tomas
-            const apiUrl = `http://localhost:9090/api/tomas?page=0&size=15&codigoInventario=${encodeURIComponent(producto.codigoInventario)}&producto=${encodeURIComponent(producto.producto)}&lote=${encodeURIComponent(producto.lote)}`;
-            
+            const apiUrl = `${config.BASE_URL}/api/tomas?page=0&size=15&codigoInventario=${encodeURIComponent(producto.codigoInventario)}&producto=${encodeURIComponent(producto.producto)}&lote=${encodeURIComponent(producto.lote)}`;
+
             // Realizar la llamada a la API con withCredentials para enviar cookies
             const response = await axios.get(apiUrl, {
               withCredentials: true

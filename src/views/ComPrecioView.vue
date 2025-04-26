@@ -806,10 +806,9 @@
                     // Obtener los datos de la API
                     const response = await axios.get(`${config.BASE_URL}/api/hanna/resultadosCombinados`, {
                         headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json"
                         },
-                        withCredentials: true, // Incluir cookies y credenciales en la solicitud
+                        withCredentials: true, 
                         params: {
                             codigoInventario: this.codigoInventario || undefined,
                         },
