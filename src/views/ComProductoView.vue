@@ -28,7 +28,8 @@
       <h3>Datos Seleccionados:</h3>
       <div v-if="apiResponse">
         <h4>Productos:</h4>
-        <table>
+        <div v-if="productosLoading">Cargando productos...</div>
+        <table v-else>
           <thead>
             <tr>
               <th>Código</th>
@@ -55,35 +56,77 @@
           </tbody>
         </table>
 
-        <!-- Tabla de observaciones para cada producto -->
-        <div v-for="(item, itemIndex) in apiResponse" :key="'obs-' + itemIndex">
-          <div v-if="item.observacionesConsultadas">
-            <h4>Observaciones para {{ item.producto }} - {{ item.codigoInventario }}</h4>
-            <div v-if="item.observacionesLoading">Cargando observaciones...</div>
-            <div v-else-if="item.observacionesError">Error: {{ item.observacionesError }}</div>
-            <div v-else-if="item.observaciones && item.observaciones.length">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Categoría</th>
-                    <th>Observación</th>
-                    <th>Fecha Registro</th>
-                    <th>Diferencia</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(obs, idx) in item.observaciones" :key="idx">
-                    <td>{{ obs.categoria_obsv }}</td>
-                    <td>{{ obs.observacion_obsv }}</td>
-                    <td>{{ formatDate(obs.fecha_registro) }}</td>
-                    <td>{{ obs.diferencia_pro }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-else>
-              No cuenta con observación
-            </div>
+        <!-- Tabla independiente de observaciones -->
+        <div>
+          <h4>Observaciones:</h4>
+          <div v-if="observacionesLoading">Cargando observaciones...</div>
+          <div v-else-if="observacionesError">Error: {{ observacionesError }}</div>
+          <div v-else-if="todasLasObservaciones && todasLasObservaciones.length">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Código Inventario</th>
+                  <th>Lote</th>
+                  <th>Categoría</th>
+                  <th>Observación</th>
+                  <th>Fecha Registro</th>
+                  <th>Diferencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(obs, idx) in todasLasObservaciones" :key="idx">
+                  <td>{{ obs.producto }}</td>
+                  <td>{{ obs.codigo_inventario_pro }}</td>
+                  <td>{{ obs.lote_pro }}</td>
+                  <td>{{ obs.categoria_obsv }}</td>
+                  <td>{{ obs.observacion_obsv }}</td>
+                  <td>{{ formatDate(obs.fecha_registro) }}</td>
+                  <td>{{ obs.diferencia_pro }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else-if="!observacionesLoading">
+            No se encontraron observaciones
+          </div>
+        </div>
+        
+        <!-- Tabla independiente de tomas -->
+        <div>
+          <h4>Tomas:</h4>
+          <div v-if="tomasLoading">Cargando tomas...</div>
+          <div v-else-if="tomasError">Error: {{ tomasError }}</div>
+          <div v-else-if="todasLasTomas && todasLasTomas.length">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código Inventario</th>
+                  <th>Producto</th>
+                  <th>Descripcion</th>
+                  <th>Lote</th>
+                  <th>Fecha Toma</th>
+                  <th>Ubicación</th>
+                  <th>Cantidad</th>
+                  <th>Usuario</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(toma, idx) in todasLasTomas" :key="idx">
+                  <td>{{ toma.codigoInventario }}</td>
+                  <td>{{ toma.producto }}</td>
+                  <td>{{ toma.descripcionProducto }}</td>
+                  <td>{{ toma.lote }}</td>
+                  <td>{{ formatDate(toma.fechaToma) }}</td>
+                  <td>{{ toma.ubicacion }}</td>
+                  <td>{{ toma.cantidad }}</td>
+                  <td>{{ toma.userDni }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else-if="!tomasLoading">
+            No se encontraron tomas
           </div>
         </div>
       </div>
@@ -127,12 +170,14 @@ export default {
       apiResponse: null, // Para almacenar la respuesta de la API
       selectedProductCode: null, // Para almacenar el código de producto seleccionado
       
-      // Nuevas propiedades para la gestión de observaciones
-      mostrarObservaciones: false,
-      observaciones: [],
+      // Propiedades para tablas independientes con estados de carga
+      todasLasObservaciones: [],
+      todasLasTomas: [],
       observacionesLoading: false,
+      tomasLoading: false,
+      productosLoading: false,
       observacionesError: null,
-      productoSeleccionado: null
+      tomasError: null
     };
   },
   mounted() {
@@ -180,11 +225,13 @@ export default {
       this.errorMessage = '';
       this.apiResponse = null;
       this.selectedProductCode = null;
-      this.mostrarObservaciones = false;
-      this.observaciones = [];
+      this.todasLasObservaciones = [];
+      this.todasLasTomas = [];
       this.observacionesLoading = false;
+      this.tomasLoading = false;
+      this.productosLoading = false;
       this.observacionesError = null;
-      this.productoSeleccionado = null;
+      this.tomasError = null;
 
       const reader = new FileReader();
 
@@ -363,8 +410,13 @@ export default {
       this.hasSelection = false;
       this.apiResponse = null;
       this.selectedProductCode = null;
-      this.mostrarObservaciones = false;
-      this.observaciones = [];
+      this.todasLasObservaciones = [];
+      this.todasLasTomas = [];
+      this.observacionesLoading = false;
+      this.tomasLoading = false;
+      this.productosLoading = false;
+      this.observacionesError = null;
+      this.tomasError = null;
     },
 
     resizeTable() {
@@ -400,11 +452,18 @@ export default {
             return;
           }
 
+          // Mostrar la vista de datos seleccionados antes de hacer las llamadas API
+          this.selectedDataVisible = true;
+          
           // Hacer la llamada a la API con el valor seleccionado
           await this.callProductApi(selectedValue);
-
-          // Mostrar la vista de datos seleccionados con la respuesta de la API
-          this.selectedDataVisible = true;
+          
+          // Iniciar las consultas de observaciones y tomas en paralelo
+          if (this.apiResponse && Array.isArray(this.apiResponse)) {
+            // Llamadas en paralelo para cargar cada tabla independientemente
+            this.obtenerTodasLasObservaciones(this.apiResponse);
+            this.obtenerTodasLasTomas(this.apiResponse);
+          }
         } else {
           // Comportamiento normal para selección múltiple
 
@@ -454,6 +513,15 @@ export default {
       try {
         console.log(`Llamando a la API para el producto: ${productCode}`);
         this.apiResponse = null; // Limpiar respuesta anterior
+        this.productosLoading = true; // Indicar que los productos están cargando
+        
+        // Limpiar datos anteriores
+        this.todasLasObservaciones = [];
+        this.todasLasTomas = [];
+        this.observacionesLoading = false;
+        this.tomasLoading = false;
+        this.observacionesError = null;
+        this.tomasError = null;
 
         // Construir la URL de la API con el código del producto
         const apiUrl = `http://localhost:9090/api/report?producto=${encodeURIComponent(productCode)}`;
@@ -467,45 +535,97 @@ export default {
         this.apiResponse = response.data;
         console.log('Respuesta de la API:', this.apiResponse);
         
-        // Consultar automáticamente las observaciones para cada producto
-        if (this.apiResponse && Array.isArray(this.apiResponse)) {
-          for (const producto of this.apiResponse) {
-            await this.obtenerObservaciones(producto);
-          }
-        }
-
       } catch (error) {
         console.error('Error al llamar a la API:', error);
         this.errorMessage = `Error al consultar la API: ${error.message || 'Error desconocido'}`;
         this.apiResponse = null;
+      } finally {
+        this.productosLoading = false; // Indicar que los productos terminaron de cargar
       }
     },
-
-    async obtenerObservaciones(producto) {
-      // En Vue 3 no es necesario usar $set, simplemente asignamos las propiedades
-      producto.observacionesConsultadas = true;
-      producto.observacionesLoading = true;
-      producto.observacionesError = null;
-      producto.observaciones = [];
-
+    
+    async obtenerTodasLasObservaciones(productos) {
+      this.observacionesLoading = true;
+      this.observacionesError = null;
+      this.todasLasObservaciones = [];
+      
       try {
-        console.log(`Consultando observaciones para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}, estado: ${producto.estado}`);
+        // Para cada producto, obtenemos sus observaciones
+        for (const producto of productos) {
+          try {
+            console.log(`Consultando observaciones para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}, estado: ${producto.estado}`);
+            
+            // Construir la URL para la API de observaciones
+            const apiUrl = `http://localhost:9090/api/observaciones/filtrar?codigo_inventario_pro=${encodeURIComponent(producto.codigoInventario)}&lote_pro=${encodeURIComponent(producto.lote)}&producto=${encodeURIComponent(producto.producto)}&estado_pro=${encodeURIComponent(producto.estado)}`;
+            
+            // Realizar la llamada a la API con withCredentials para enviar cookies
+            const response = await axios.get(apiUrl, {
+              withCredentials: true
+            });
+            
+            // Si hay observaciones, las agregamos al array total
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+              this.todasLasObservaciones = [...this.todasLasObservaciones, ...response.data];
+            }
+          } catch (error) {
+            console.error(`Error al consultar observaciones para producto ${producto.producto}:`, error);
+            // Continuamos con el siguiente producto aunque falle una consulta
+          }
+        }
         
-        // Construir la URL para la API de observaciones
-        const apiUrl = `http://localhost:9090/api/observaciones/filtrar?codigo_inventario_pro=${encodeURIComponent(producto.codigoInventario)}&lote_pro=${encodeURIComponent(producto.lote)}&producto=${encodeURIComponent(producto.producto)}&estado_pro=${encodeURIComponent(producto.estado)}`;
-        
-        // Realizar la llamada a la API con withCredentials para enviar cookies
-        const response = await axios.get(apiUrl, {
-          withCredentials: true
-        });
-        
-        producto.observaciones = response.data;
-        console.log('Observaciones recibidas:', response.data);
+        console.log('Total de observaciones recopiladas:', this.todasLasObservaciones.length);
       } catch (error) {
-        console.error('Error al consultar observaciones:', error);
-        producto.observacionesError = error.message || 'Error desconocido al obtener observaciones';
+        console.error('Error general al consultar observaciones:', error);
+        this.observacionesError = error.message || 'Error desconocido al obtener observaciones';
       } finally {
-        producto.observacionesLoading = false;
+        this.observacionesLoading = false;
+      }
+    },
+    
+    async obtenerTodasLasTomas(productos) {
+      this.tomasLoading = true;
+      this.tomasError = null;
+      this.todasLasTomas = [];
+      
+      try {
+        // Para cada producto, obtenemos sus tomas
+        for (const producto of productos) {
+          try {
+            console.log(`Consultando tomas para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}`);
+            
+            // Construir la URL para la API de tomas
+            const apiUrl = `http://localhost:9090/api/tomas?page=0&size=15&codigoInventario=${encodeURIComponent(producto.codigoInventario)}&producto=${encodeURIComponent(producto.producto)}&lote=${encodeURIComponent(producto.lote)}`;
+            
+            // Realizar la llamada a la API con withCredentials para enviar cookies
+            const response = await axios.get(apiUrl, {
+              withCredentials: true
+            });
+            
+            // Si hay tomas, las agregamos al array total
+            const tomas = response.data.content || response.data;
+            if (tomas && Array.isArray(tomas) && tomas.length > 0) {
+              // Añadimos información del producto si no la tiene
+              const tomasConProducto = tomas.map(toma => ({
+                ...toma,
+                producto: toma.producto || producto.producto,
+                codigoInventario: toma.codigoInventario || producto.codigoInventario,
+                lote: toma.lote || producto.lote
+              }));
+              
+              this.todasLasTomas = [...this.todasLasTomas, ...tomasConProducto];
+            }
+          } catch (error) {
+            console.error(`Error al consultar tomas para producto ${producto.producto}:`, error);
+            // Continuamos con el siguiente producto aunque falle una consulta
+          }
+        }
+        
+        console.log('Total de tomas recopiladas:', this.todasLasTomas.length);
+      } catch (error) {
+        console.error('Error general al consultar tomas:', error);
+        this.tomasError = error.message || 'Error desconocido al obtener tomas';
+      } finally {
+        this.tomasLoading = false;
       }
     },
     
@@ -528,6 +648,13 @@ export default {
     closeSelectedData() {
       this.selectedDataVisible = false;
       this.apiResponse = null;
+      this.todasLasObservaciones = [];
+      this.todasLasTomas = [];
+      this.observacionesLoading = false;
+      this.tomasLoading = false;
+      this.productosLoading = false;
+      this.observacionesError = null;
+      this.tomasError = null;
     },
 
     exportSelectedData() {
@@ -560,7 +687,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .spreadsheet-container {
     font-family: Arial, sans-serif;
