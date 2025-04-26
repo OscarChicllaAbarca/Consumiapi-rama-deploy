@@ -1,39 +1,98 @@
 <template>
   <div class="spreadsheet-container">
     <h2>Visualizador Tipo Excel</h2>
-    
- 
+
     <div class="upload-section">
       <input type="file" @change="handleFileUpload" accept=".xlsx, .xls" />
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
     </div>
-    
 
     <div v-if="sheetNames.length > 0" class="sheet-selector">
       <label>Hoja: </label>
       <select v-model="selectedSheet" @change="changeSheet">
         <option v-for="sheet in sheetNames" :key="sheet" :value="sheet">{{ sheet }}</option>
       </select>
-      
+
       <div class="sheet-actions">
         <button @click="showSelectedData" :disabled="!hasSelection">
           Ver selección
         </button>
       </div>
     </div>
-    
 
     <div v-if="sheetData.length > 0" class="excel-grid-container">
       <div id="hot-table" ref="hotTable"></div>
     </div>
-    
-  
+
     <div v-if="selectedDataVisible" class="selected-data-view">
       <h3>Datos Seleccionados:</h3>
-      <div class="selected-grid-container">
-        <div id="selected-hot-table" ref="selectedHotTable"></div>
+      <div v-if="apiResponse">
+        <h4>Productos:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Propietario</th>
+              <th>Lote</th>
+              <th>Unidad Medida</th>
+              <th>Código Inventario</th>
+              <th>Estado</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in apiResponse" :key="index">
+              <td>{{ item.producto }}</td>
+              <td>{{ item.descripcionProducto }}</td>
+              <td>{{ item.propietario }}</td>
+              <td>{{ item.lote }}</td>
+              <td>{{ item.unidadMedidaBase }}</td>
+              <td>{{ item.codigoInventario }}</td>
+              <td>{{ item.estado }}</td>
+              <td>{{ item.cantidad }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Tabla de observaciones para cada producto -->
+        <div v-for="(item, itemIndex) in apiResponse" :key="'obs-' + itemIndex">
+          <div v-if="item.observacionesConsultadas">
+            <h4>Observaciones para {{ item.producto }} - {{ item.codigoInventario }}</h4>
+            <div v-if="item.observacionesLoading">Cargando observaciones...</div>
+            <div v-else-if="item.observacionesError">Error: {{ item.observacionesError }}</div>
+            <div v-else-if="item.observaciones && item.observaciones.length">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Categoría</th>
+                    <th>Observación</th>
+                    <th>Fecha Registro</th>
+                    <th>Diferencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(obs, idx) in item.observaciones" :key="idx">
+                    <td>{{ obs.categoria_obsv }}</td>
+                    <td>{{ obs.observacion_obsv }}</td>
+                    <td>{{ formatDate(obs.fecha_registro) }}</td>
+                    <td>{{ obs.diferencia_pro }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else>
+              No cuenta con observación
+            </div>
+          </div>
+        </div>
       </div>
-      
+      <div v-else>
+        <div class="selected-grid-container">
+          <div id="selected-hot-table" ref="selectedHotTable"></div>
+        </div>
+      </div>
+
       <div class="export-options">
         <button @click="exportSelectedData" class="export-button">Exportar selección</button>
         <button @click="closeSelectedData" class="close-button">Cerrar</button>
@@ -45,41 +104,47 @@
 <script>
 // Importamos XLSX para procesar archivos Excel
 import * as XLSX from 'xlsx';
-
-
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
+import axios from 'axios'; // Importamos axios para hacer llamadas HTTP
 
 export default {
   name: 'SpreadsheetViewer',
   data() {
     return {
-      workbook: null,           
-      sheetNames: [],          
-      selectedSheet: '',        
-      hotInstance: null,        
-      selectedHotInstance: null, 
-      sheetData: [],           
-      selectedData: [],         
-      selectedDataHeaders: [],  
-      selectedDataVisible: false, 
-      currentSelection: null,   
-      hasSelection: false,     
-      errorMessage: ''          
+      workbook: null,
+      sheetNames: [],
+      selectedSheet: '',
+      hotInstance: null,
+      selectedHotInstance: null,
+      sheetData: [],
+      selectedData: [],
+      selectedDataHeaders: [],
+      selectedDataVisible: false,
+      currentSelection: null,
+      hasSelection: false,
+      errorMessage: '',
+      apiResponse: null, // Para almacenar la respuesta de la API
+      selectedProductCode: null, // Para almacenar el código de producto seleccionado
+      
+      // Nuevas propiedades para la gestión de observaciones
+      mostrarObservaciones: false,
+      observaciones: [],
+      observacionesLoading: false,
+      observacionesError: null,
+      productoSeleccionado: null
     };
   },
   mounted() {
-
     window.addEventListener('resize', this.resizeTable);
   },
   beforeDestroy() {
-
     window.removeEventListener('resize', this.resizeTable);
-    
+
     if (this.hotInstance) {
       this.hotInstance.destroy();
     }
-    
+
     if (this.selectedHotInstance) {
       this.selectedHotInstance.destroy();
     }
@@ -97,12 +162,12 @@ export default {
         this.hotInstance.destroy();
         this.hotInstance = null;
       }
-      
+
       if (this.selectedHotInstance) {
         this.selectedHotInstance.destroy();
         this.selectedHotInstance = null;
       }
-      
+
       this.workbook = null;
       this.sheetNames = [];
       this.selectedSheet = '';
@@ -113,101 +178,100 @@ export default {
       this.currentSelection = null;
       this.hasSelection = false;
       this.errorMessage = '';
-      
+      this.apiResponse = null;
+      this.selectedProductCode = null;
+      this.mostrarObservaciones = false;
+      this.observaciones = [];
+      this.observacionesLoading = false;
+      this.observacionesError = null;
+      this.productoSeleccionado = null;
+
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          this.workbook = XLSX.read(data, { 
+          this.workbook = XLSX.read(data, {
             type: 'array',
             cellDates: true,
             cellStyles: true
           });
-    
+
           this.sheetNames = this.workbook.SheetNames;
-          
+
           if (this.sheetNames.length === 0) {
             this.errorMessage = 'No se encontraron hojas en el archivo';
             return;
           }
-          
-         
+
           this.selectedSheet = this.sheetNames[0];
           this.loadSheetData(this.selectedSheet);
-          
+
         } catch (error) {
           this.errorMessage = 'Error al procesar el archivo: ' + error.message;
           console.error('Error procesando el archivo Excel:', error);
         }
       };
-      
+
       reader.onerror = (error) => {
         this.errorMessage = 'Error al leer el archivo';
         console.error('Error leyendo el archivo:', error);
       };
-      
+
       reader.readAsArrayBuffer(file);
     },
-    
+
     loadSheetData(sheetName) {
       if (!this.workbook || !sheetName) return;
-      
+
       try {
         const worksheet = this.workbook.Sheets[sheetName];
-        
-   
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
           header: 1,
           raw: false,
-          defval: '' 
+          defval: ''
         });
-        
+
         if (jsonData.length === 0) {
           this.errorMessage = 'No se encontraron datos en la hoja seleccionada';
           return;
         }
-        
+
         this.sheetData = jsonData;
 
-        
       } catch (error) {
         this.errorMessage = 'Error al cargar datos de la hoja: ' + error.message;
         console.error('Error cargando datos de la hoja:', error);
       }
     },
-    
+
     initializeHandsontable() {
-  
       if (!this.$refs.hotTable) {
         console.error('El elemento de referencia hotTable no existe');
         this.errorMessage = 'Error al inicializar la tabla: elemento no encontrado';
         return;
       }
-      
+
       const container = this.$refs.hotTable;
-      
-     
+
       if (!document.body.contains(container)) {
         console.error('El elemento hotTable no está en el DOM');
         this.errorMessage = 'Error al inicializar la tabla: elemento no está en el DOM';
         return;
       }
-      
-  
+
       if (this.hotInstance) {
         this.hotInstance.destroy();
       }
-      
-      
+
       if (!Array.isArray(this.sheetData)) {
         console.error('Los datos de la hoja no son un array válido', this.sheetData);
         this.errorMessage = 'Error: Formato de datos no válido';
         return;
       }
-      
+
       try {
-        
         this.hotInstance = new Handsontable(container, {
           data: this.sheetData,
           rowHeaders: true,
@@ -217,51 +281,54 @@ export default {
           manualRowResize: true,
           stretchH: 'all',
           autoColumnSize: true,
-          licenseKey: 'non-commercial-and-evaluation', 
-          readOnly: false, 
+          licenseKey: 'non-commercial-and-evaluation',
+          readOnly: false,
           outsideClickDeselects: false,
           selectionMode: 'multiple',
           afterSelectionEnd: (row, column, row2, column2) => {
             this.currentSelection = [row, column, row2, column2];
             this.hasSelection = true;
+
+            // Obtener el valor de la celda seleccionada si es una sola celda
+            if (row === row2 && column === column2) {
+              this.selectedProductCode = this.sheetData[row][column];
+              console.log('Código de producto seleccionado:', this.selectedProductCode);
+            } else {
+              this.selectedProductCode = null;
+            }
           }
         });
-        
-     
+
         setTimeout(() => {
           this.resizeTable();
         }, 0);
-        
+
       } catch (error) {
         console.error('Error al inicializar Handsontable:', error);
         this.errorMessage = 'Error al inicializar la tabla: ' + error.message;
       }
     },
-    
+
     initializeSelectedDataTable() {
-  
       if (!this.$refs.selectedHotTable) {
         console.error('El elemento de referencia selectedHotTable no existe');
         this.errorMessage = 'Error al inicializar la tabla de selección: elemento no encontrado';
         return;
       }
-      
+
       const container = this.$refs.selectedHotTable;
-      
 
       if (this.selectedHotInstance) {
         this.selectedHotInstance.destroy();
       }
-      
-     
+
       if (!Array.isArray(this.selectedData)) {
         console.error('Los datos seleccionados no son un array válido', this.selectedData);
         this.errorMessage = 'Error: Formato de datos seleccionados no válido';
         return;
       }
-      
+
       try {
-    
         this.selectedHotInstance = new Handsontable(container, {
           data: this.selectedData,
           rowHeaders: true,
@@ -271,10 +338,9 @@ export default {
           manualRowResize: true,
           stretchH: 'all',
           autoColumnSize: true,
-          licenseKey: 'non-commercial-and-evaluation', 
-          readOnly: false 
+          licenseKey: 'non-commercial-and-evaluation',
+          readOnly: false
         });
-        
 
         setTimeout(() => {
           if (this.selectedHotInstance) {
@@ -284,19 +350,23 @@ export default {
             });
           }
         }, 0);
-        
+
       } catch (error) {
         console.error('Error al inicializar tabla de selección:', error);
         this.errorMessage = 'Error al inicializar la tabla de selección: ' + error.message;
       }
     },
-    
+
     changeSheet() {
       this.loadSheetData(this.selectedSheet);
       this.selectedDataVisible = false;
       this.hasSelection = false;
+      this.apiResponse = null;
+      this.selectedProductCode = null;
+      this.mostrarObservaciones = false;
+      this.observaciones = [];
     },
-    
+
     resizeTable() {
       if (this.hotInstance && this.$refs.hotTable) {
         const container = this.$refs.hotTable;
@@ -308,86 +378,180 @@ export default {
         }
       }
     },
-    
-    showSelectedData() {
+
+    async showSelectedData() {
       if (!this.hasSelection || !this.currentSelection) {
         this.errorMessage = 'Por favor selecciona algunas celdas primero';
         return;
       }
-      
+
       try {
-
         const [startRow, startCol, endRow, endCol] = this.currentSelection;
-        
-        // Determinar el rango real (el orden puede ser inverso)
-        const fromRow = Math.min(startRow, endRow);
-        const toRow = Math.max(startRow, endRow);
-        const fromCol = Math.min(startCol, endCol);
-        const toCol = Math.max(startCol, endCol);
-        
 
-        this.selectedDataHeaders = [];
-        if (fromRow === 0) {
-          for (let col = fromCol; col <= toCol; col++) {
-            this.selectedDataHeaders.push(this.sheetData[0][col] || `Col ${col+1}`);
+        // Determinar si es una única celda
+        const isSingleCell = startRow === endRow && startCol === endCol;
+
+        if (isSingleCell) {
+          // Obtener el valor de la celda seleccionada
+          const selectedValue = this.sheetData[startRow][startCol];
+
+          if (!selectedValue) {
+            this.errorMessage = 'La celda seleccionada está vacía';
+            return;
           }
-        }
-        
-        // Extraer datos seleccionados
-        this.selectedData = [];
-        const startRowIndex = (fromRow === 0 && this.selectedDataHeaders.length > 0) ? 1 : fromRow;
-        
-        for (let row = startRowIndex; row <= toRow; row++) {
-          if (!this.sheetData[row]) continue;
-          
-          const rowData = [];
-          for (let col = fromCol; col <= toCol; col++) {
-            rowData.push(this.sheetData[row][col] || '');
+
+          // Hacer la llamada a la API con el valor seleccionado
+          await this.callProductApi(selectedValue);
+
+          // Mostrar la vista de datos seleccionados con la respuesta de la API
+          this.selectedDataVisible = true;
+        } else {
+          // Comportamiento normal para selección múltiple
+
+          // Determinar el rango real (el orden puede ser inverso)
+          const fromRow = Math.min(startRow, endRow);
+          const toRow = Math.max(startRow, endRow);
+          const fromCol = Math.min(startCol, endCol);
+          const toCol = Math.max(startCol, endCol);
+
+          this.selectedDataHeaders = [];
+          if (fromRow === 0) {
+            for (let col = fromCol; col <= toCol; col++) {
+              this.selectedDataHeaders.push(this.sheetData[0][col] || `Col ${col+1}`);
+            }
           }
-          this.selectedData.push(rowData);
+
+          // Extraer datos seleccionados
+          this.selectedData = [];
+          const startRowIndex = (fromRow === 0 && this.selectedDataHeaders.length > 0) ? 1 : fromRow;
+
+          for (let row = startRowIndex; row <= toRow; row++) {
+            if (!this.sheetData[row]) continue;
+
+            const rowData = [];
+            for (let col = fromCol; col <= toCol; col++) {
+              rowData.push(this.sheetData[row][col] || '');
+            }
+            this.selectedData.push(rowData);
+          }
+
+          // Mostrar los datos seleccionados
+          this.selectedDataVisible = true;
+
+          // Inicializar tabla de datos seleccionados
+          setTimeout(() => {
+            this.initializeSelectedDataTable();
+          }, 0);
         }
-        
-        // Mostrar los datos seleccionados
-        this.selectedDataVisible = true;
-        
-        // Inicializar tabla de datos seleccionados
-        // Usamos setTimeout para asegurar que el DOM se actualice antes de inicializar
-        setTimeout(() => {
-          this.initializeSelectedDataTable();
-        }, 0);
-        
+
       } catch (error) {
         this.errorMessage = 'Error al procesar la selección: ' + error.message;
         console.error('Error procesando selección:', error);
       }
     },
-    
-    closeSelectedData() {
-      this.selectedDataVisible = false;
+
+    async callProductApi(productCode) {
+      try {
+        console.log(`Llamando a la API para el producto: ${productCode}`);
+        this.apiResponse = null; // Limpiar respuesta anterior
+
+        // Construir la URL de la API con el código del producto
+        const apiUrl = `http://localhost:9090/api/report?producto=${encodeURIComponent(productCode)}`;
+
+        // Realizar la llamada a la API con withCredentials para enviar cookies
+        const response = await axios.get(apiUrl, {
+          withCredentials: true // Esto permite enviar cookies en la solicitud
+        });
+
+        // Almacenar la respuesta de la API
+        this.apiResponse = response.data;
+        console.log('Respuesta de la API:', this.apiResponse);
+        
+        // Consultar automáticamente las observaciones para cada producto
+        if (this.apiResponse && Array.isArray(this.apiResponse)) {
+          for (const producto of this.apiResponse) {
+            await this.obtenerObservaciones(producto);
+          }
+        }
+
+      } catch (error) {
+        console.error('Error al llamar a la API:', error);
+        this.errorMessage = `Error al consultar la API: ${error.message || 'Error desconocido'}`;
+        this.apiResponse = null;
+      }
+    },
+
+    async obtenerObservaciones(producto) {
+      // En Vue 3 no es necesario usar $set, simplemente asignamos las propiedades
+      producto.observacionesConsultadas = true;
+      producto.observacionesLoading = true;
+      producto.observacionesError = null;
+      producto.observaciones = [];
+
+      try {
+        console.log(`Consultando observaciones para: ${producto.producto}, lote: ${producto.lote}, código inventario: ${producto.codigoInventario}, estado: ${producto.estado}`);
+        
+        // Construir la URL para la API de observaciones
+        const apiUrl = `http://localhost:9090/api/observaciones/filtrar?codigo_inventario_pro=${encodeURIComponent(producto.codigoInventario)}&lote_pro=${encodeURIComponent(producto.lote)}&producto=${encodeURIComponent(producto.producto)}&estado_pro=${encodeURIComponent(producto.estado)}`;
+        
+        // Realizar la llamada a la API con withCredentials para enviar cookies
+        const response = await axios.get(apiUrl, {
+          withCredentials: true
+        });
+        
+        producto.observaciones = response.data;
+        console.log('Observaciones recibidas:', response.data);
+      } catch (error) {
+        console.error('Error al consultar observaciones:', error);
+        producto.observacionesError = error.message || 'Error desconocido al obtener observaciones';
+      } finally {
+        producto.observacionesLoading = false;
+      }
     },
     
+    formatDate(dateString) {
+      if (!dateString) return '';
+      
+      // Convertir la fecha (que está en formato ISO)
+      const date = new Date(dateString);
+      
+      // Formatear la fecha como dd/mm/yyyy hh:mm
+      return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
+
+    closeSelectedData() {
+      this.selectedDataVisible = false;
+      this.apiResponse = null;
+    },
+
     exportSelectedData() {
       if (!this.selectedData || this.selectedData.length === 0) {
         this.errorMessage = 'No hay datos para exportar';
         return;
       }
-      
+
       try {
         // Crear una nueva hoja de trabajo
         const ws = XLSX.utils.aoa_to_sheet(
-          this.selectedDataHeaders.length > 0 
-            ? [this.selectedDataHeaders, ...this.selectedData] 
-            : this.selectedData
+          this.selectedDataHeaders.length > 0 ?
+          [this.selectedDataHeaders, ...this.selectedData] :
+          this.selectedData
         );
-        
+
         // Crear un nuevo libro de trabajo y añadir la hoja
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Datos Seleccionados");
-        
+
         // Exportar a archivo
-        const fileName = "datos_seleccionados_" + new Date().toISOString().slice(0,10) + ".xlsx";
+        const fileName = "datos_seleccionados_" + new Date().toISOString().slice(0, 10) + ".xlsx";
         XLSX.writeFile(wb, fileName);
-        
+
       } catch (error) {
         this.errorMessage = 'Error al exportar: ' + error.message;
         console.error('Error exportando datos:', error);
@@ -399,115 +563,117 @@ export default {
 
 <style scoped>
 .spreadsheet-container {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  max-width: 100%;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    max-width: 100%;
 }
 
 .upload-section {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 .error-message {
-  color: red;
-  font-weight: bold;
-  margin-top: 10px;
+    color: red;
+    font-weight: bold;
+    margin-top: 10px;
 }
 
 .sheet-selector {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 15px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
 }
 
 .sheet-selector select {
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
 
 .sheet-actions button {
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 .sheet-actions button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 
-.excel-grid-container, .selected-grid-container {
-  width: 100%;
-  overflow: hidden;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  min-height: 400px; /* Asegurar que el contenedor tenga altura incluso vacío */
+.excel-grid-container,
+.selected-grid-container {
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    min-height: 400px;
+    /* Asegurar que el contenedor tenga altura incluso vacío */
 }
 
 .selected-data-view {
-  margin-top: 30px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f8f8f8;
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f8f8;
 }
 
 .export-options {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
 }
 
 .export-button {
-  background-color: #337ab7;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
+    background-color: #337ab7;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 .close-button {
-  background-color: #d9534f;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
+    background-color: #d9534f;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 /* Estilos para mejorar la apariencia de Handsontable */
 :deep(.handsontable) {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 :deep(.handsontable .htDimmed) {
-  font-weight: bold;
-  background-color: #f3f3f3;
+    font-weight: bold;
+    background-color: #f3f3f3;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .sheet-selector {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .sheet-selector {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 </style>
