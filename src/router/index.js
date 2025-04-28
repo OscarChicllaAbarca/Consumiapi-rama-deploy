@@ -23,6 +23,45 @@ import axios from "axios";
 import config from "@/config"; // Ajusta la ruta de tu configuración
 import store from '@/store'; 
 
+
+
+async function refreshToken() {
+  try {
+    const response = await axios.post(`${config.BASE_URL}/login/refresh-token`, {}, {
+      withCredentials: true
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error('Error al renovar el token:', error);
+    return false;
+  }
+}
+
+axios.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config;
+    
+    // Si es un error 401 (Unauthorized) y no hemos intentado renovar el token ya
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Intentar renovar el token
+      const refreshSuccess = await refreshToken();
+      
+      if (refreshSuccess) {
+        // Reintentar la petición original con el nuevo token
+        return axios(originalRequest);
+      } else {
+        // Si falla la renovación, redirigir al login
+        router.push('/');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 const routes = [
   {
     path: '/',
@@ -130,6 +169,10 @@ const router = createRouter({
   routes
 });
 
+
+
+
+
 router.beforeEach(async (to, from, next) => {
   // Si va al login, no verifica nada
   if (to.path === "/") {
@@ -151,7 +194,7 @@ router.beforeEach(async (to, from, next) => {
   
       // Si no tiene roles definidos
       if (!userRoles || (Array.isArray(userRoles) && userRoles.length === 0)) {
-        return next('/login');
+        return next('/');
       }
   
       const hasClientRole = Array.isArray(userRoles)
@@ -166,11 +209,28 @@ router.beforeEach(async (to, from, next) => {
       return next();
     }
   } catch (error) {
-    console.error('Error al verificar usuario:', error);
-    return next('/login');
+    // Si es un error 401, intentar renovar el token
+    if (error.response && error.response.status === 401) {
+      try {
+        // Intentar renovar el token
+        const refreshSuccess = await refreshToken();
+        
+        if (refreshSuccess) {
+          // Si se renovó con éxito, continuar con la navegación original
+          return next();
+        } else {
+          console.error('No se pudo renovar el token');
+          return next('/');
+        }
+      } catch (refreshError) {
+        console.error('Error al intentar renovar el token:', refreshError);
+        return next('/');
+      }
+    } else {
+      console.error('Error al verificar usuario:', error);
+      return next('/');
+    }
   }
-  
-  
 });
 
 export default router;
