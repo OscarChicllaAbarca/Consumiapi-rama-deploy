@@ -162,7 +162,7 @@
                 </th>
                 <th>
                   <div class="th-content">
-                    <i class="fas fa-sort-amount-up"></i> Cantidad
+                    <i class="fas fa-sort-amount-up"></i> Diferencia
                   </div>
                 </th>
               </tr>
@@ -304,7 +304,7 @@
                 </th>
                 <th>
                   <div class="th-content">
-                    <i class="fas fa-sort-amount-up"></i> Cantidad
+                    <i class="fas fa-sort-amount-up"></i> Cantidad Tomada
                   </div>
                 </th>
                 <th>
@@ -487,9 +487,7 @@ export default {
         
         calcularFechaInventario(codigoInventario) {
           if (!codigoInventario) return 'N/A';
-          
-          // Extraer información del código para determinar la fecha
-          // Puedes personalizar esta lógica según tu formato específico
+        
           const codeParts = codigoInventario.match(/(\d{4})(\d{2})?/);
           
           if (!codeParts) return 'Fecha no disponible';
@@ -499,17 +497,7 @@ export default {
           
           // Mapeo de códigos a fechas específicas
           switch (codigoInventario) {
-            case 'INVCICL2024441':
-              return 'Octubre 2024';
-            case 'INVCICL20244510':
-              return 'Noviembre 2024';
-            case 'INVCICL2024451':
-              return 'Noviembre 2024';
             case 'INVGENE2024473':
-              return 'Diciembre 2024';
-            case 'INVCICL2024501':
-              return 'Diciembre 2024';
-            case 'INVCICL2024511':
               return 'Diciembre 2024';
             case 'INVCONT202511':
               return 'Marzo 2025';
@@ -2030,15 +2018,6 @@ h3 i {
   background-color: rgba(12, 83, 76, 0.05);
 }
 
-/* Estilo para filas resaltadas */
-.highlighted-row {
-  background-color: #e6f1ec !important;
-  border-left: 3px solid #0c534c;
-  font-weight: 500;
-}
 
-.highlighted-row:hover {
-  background-color: #d0e8e3 !important;
-}
 
 </style>

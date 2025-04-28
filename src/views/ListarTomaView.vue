@@ -1,7 +1,8 @@
 <template>
 <div class="container-fluid px-0">
     <div class="row g-0">
-        <!-- Filtros optimizados para móvil con diseño acordeón en dispositivos pequeños -->
+       
+       <!-- Filtros optimizados para móvil con diseño acordeón en dispositivos pequeños -->
         <div class="col-12 mb-3">
             <div class="filter-panel p-3 rounded-4 shadow-sm" :class="{'filter-panel-expanded': showFilters}">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -10,13 +11,17 @@
                         <i class="fas" :class="showFilters ? 'fa-chevron-up' : 'fa-filter'"></i>
                     </button>
                 </div>
-
-                <div :class="{'d-none d-md-block': !showFilters}">
+                
+                <!-- Cambiamos esto para que solo dependa de showFilters -->
+                <div v-show="showFilters || $mq === 'md' || $mq === 'lg' || $mq === 'xl'">
                     <div class="row g-2">
-                        <!-- Filtros se mantienen igual -->
+                        <!-- Filtros se mantienen igual pero añadimos eventos @focus -->
                         <div class="col-12 col-md-6 col-lg-3">
                             <label for="codigoInventario" class="form-label small mb-1">Código:</label>
-                            <select id="codigoInventario" v-model="codigoInventario" class="form-select form-select-sm rounded-pill">
+                            <select id="codigoInventario"
+                                v-model="codigoInventario"
+                                class="form-select form-select-sm rounded-pill"
+                                @focus="keepFiltersOpen">
                                 <option value="" disabled>Seleccione un código</option>
                                 <option v-for="codigo in codigosInventario" :key="codigo" :value="codigo">
                                     {{ codigo }}
@@ -25,13 +30,21 @@
                         </div>
                         <div class="col-12 col-md-6 col-lg-3">
                             <label for="ubicacion" class="form-label small mb-1">Ubicación:</label>
-                            <input type="text" id="ubicacion" v-model="ubicacion" @change="obtenerTomas" class="form-control form-control-sm rounded-pill">
+                            <input type="text" id="ubicacion"
+                                v-model="ubicacion"
+                                @focus="keepFiltersOpen"
+                                @change="obtenerTomas"
+                                class="form-control form-control-sm rounded-pill">
                         </div>
                         <div class="col-12 col-md-6 col-lg-3">
                             <label for="producto" class="form-label small mb-1">Producto:</label>
-                            <input type="text" id="producto" v-model="producto" @change="debounceObtenerTomas" class="form-control form-control-sm rounded-pill">
+                            <input type="text" id="producto"
+                                v-model="producto"
+                                @focus="keepFiltersOpen"
+                                @change="debounceObtenerTomas"
+                                class="form-control form-control-sm rounded-pill">
                         </div>
-
+                        
                         <div class="col-12 mt-2">
                             <button @click="exportarPorCodigo" class="btn btn-sm btn-primary rounded-pill w-100 w-md-auto" :disabled="isExporting || !codigoInventario">
                                 <i class="fas fa-file-export me-1"></i>
@@ -453,7 +466,9 @@ export default {
         toggleFilters() {
             this.showFilters = !this.showFilters;
         },
-
+        keepFiltersOpen() {
+            
+        },
         resetFilters() {
             this.codigoInventario = '';
             this.ubicacion = '';
@@ -464,11 +479,10 @@ export default {
 
         handleResize() {
             // Ajustar la interfaz basado en el tamaño de pantalla
-            if (window.innerWidth < 768) {
-                this.showFilters = false;
+             if (window.innerWidth < 768) {
                 this.pageSize = 5; // Menos items por página en móvil
             } else {
-                this.showFilters = true;
+                this.showFilters=true;
                 this.pageSize = 10;
             }
         },
