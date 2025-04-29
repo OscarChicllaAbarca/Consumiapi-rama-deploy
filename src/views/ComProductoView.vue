@@ -957,7 +957,7 @@ export default {
 
         if (isSingleCell) {
           // Obtener el valor de la celda seleccionada
-          const selectedValue = this.sheetData[startRow][startCol];
+          const selectedValue = this.hotInstance.getDataAtCell(startRow, startCol);
 
           if (!selectedValue) {
             this.errorMessage = 'La celda seleccionada está vacía';
