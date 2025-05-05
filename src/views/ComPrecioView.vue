@@ -49,6 +49,11 @@
                     <i class="fas fa-sync-alt"></i>
                     <span class="btn-text">Restablecer</span>
                 </button>
+                <button @click="mostrarTerminosCondiciones()" class="btn-reset">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="btn-text">Aceptar Términos y Condiciones</span>
+                </button>
+
                 <button @click="exportarCodigoExcel(codigoInventario)" class="btn-buscar">
                     <i class="fas fa-file-export"></i>
                     <span class="btn-text">{{ isExportingCodigo ? 'Exportando...' : 'Exportar por Código Inv.' }}</span>
@@ -427,21 +432,30 @@
             </table>
         </div>
     </div>
+
+    <!-- Al final del template, antes de cerrar el div principal -->
+    <TerminosCondicionesModal
+    :show="mostrarModalTerminos"
+    :codigoInventarioActual="codigoInventario"
+    :datosResumen="resumenDatosActuales"
+    @aceptado="onTerminosAceptados"
+    @cerrar="onModalTerminosCerrado"
+    />
 </div>
 </template>
 
-    
-    
 <script>
 import axios from 'axios';
 import config from '../config';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 import Loading from '../components/Loading.vue';
+import TerminosCondicionesModal from '../components/TerminosCondicionesModal.vue';
 
 export default {
     components: {
-        Loading
+        Loading,
+        TerminosCondicionesModal
     },
     data() {
         return {
@@ -452,7 +466,7 @@ export default {
             datos: [],
             datosFiltrados: [], // Datos filtrados según los filtros
             codigosInventario: ['INVINOP202543', 'INVCICL202532', 'INVCICL202554', 'INVCICL202565', 'INVCICL202576', 'INVCICL202521',
-                'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110', 'INVCICL20251211', 'INVCICL20251312', 'INVCICL20251413', 'INVCICL20251514', 'INVCONT20251715','INVCICL20251817'
+                'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110', 'INVCICL20251211', 'INVCICL20251312', 'INVCICL20251413', 'INVCICL20251514', 'INVCONT20251715', 'INVCICL20251817'
             ],
 
             filtroEstado: '', // Estado seleccionado en el filtro
@@ -509,10 +523,53 @@ export default {
             totalPages: 1,
 
             //inventariohistorial
-            paginatedData: []
+            paginatedData: [],
+
+            //modalterminoCondiciones
+            mostrarModalTerminos: false,
+            resumenDatosActuales: {
+                faltanteSku: 0,
+                faltanteValor: 0,
+                sobranteSku: 0,
+                sobranteValor: 0,
+                conciliadoSku: 0,
+                conciliadoValor: 0
+            }
         };
     },
+
     methods: {
+        //mostar modal 
+        mostrarTerminosCondiciones() {
+            if (!this.codigoInventario) {
+                alert('Debe seleccionar un código de inventario');
+                return;
+            }
+
+            // Prepara los datos del resumen actual
+            this.resumenDatosActuales = {
+                faltanteSku: this.totals['Faltante'] || 0,
+                faltanteValor: parseFloat(this.sumaFaltante() || 0),
+                sobranteSku: this.totals['Sobrante'] || 0,
+                sobranteValor: parseFloat(this.sumaSobrante() || 0),
+                conciliadoSku: this.totals['Conciliado'] || 0,
+                conciliadoValor: parseFloat(this.sumaConciliadoOriginal() || 0)
+            };
+
+            this.mostrarModalTerminos = true;
+        },
+
+        // Maneja cuando se acepta el modal
+        onTerminosAceptados(response) {
+            console.log('Términos aceptados:', response);
+            alert('¡Términos y condiciones aceptados exitosamente!');
+            // Aquí puedes agregar lógica adicional después de aceptar
+        },
+
+        // Maneja cuando se cierra el modal
+        onModalTerminosCerrado() {
+            this.mostrarModalTerminos = false;
+        },
         getVisiblePageNumbers() {
             const maxVisible = window.innerWidth < 768 ? 3 : 5;
             const halfVisible = Math.floor(maxVisible / 2);
@@ -1106,9 +1163,10 @@ export default {
             this.filtrarDatos();
         }
     }
+
 };
 </script>
-  
+
 <style scoped>
 /* ===== ESTILOS BASE PARA VISTA WEB EXPANDIDA ===== */
 * {
@@ -2032,5 +2090,20 @@ export default {
     .history-title {
         page-break-before: always;
     }
+}
+
+/* Estilos específicos para el botón de términos */
+.filtro-acciones .btn-reset {
+  transition: all 0.3s ease;
+}
+
+.filtro-acciones .btn-reset:hover {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.filtro-acciones .btn-reset i {
+  margin-right: 5px;
 }
 </style>

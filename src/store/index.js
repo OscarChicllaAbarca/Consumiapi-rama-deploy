@@ -161,8 +161,6 @@ export default createStore({
                   ubicacion: state.ubicacion || '',
               },
           });
-  
-          console.log("Detalles obtenidos:", response.data);
           commit('setDetalles', response.data);
       } catch (error) {
           console.error("Error al obtener detalles:", error.response?.data || error.message);

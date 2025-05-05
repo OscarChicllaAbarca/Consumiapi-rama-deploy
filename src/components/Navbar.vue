@@ -88,9 +88,9 @@
                                 <i class="fas fa-users-cog"></i> Carga Inventario
                             </router-link>
                         </li>
-
                     </template>
-                    <template v-if="hasAdminRole || hasSuperRole" >  
+
+                    <template v-if="hasAdminRole || hasSuperRole|| hasSuper2Role">
                         <li>
                             <router-link to="/ComPrecio" class="dropdown-item">
                                 <i class="fas fa-cogs"></i> Comparativo de Precio
@@ -134,7 +134,7 @@
                 </ul>
             </transition>
 
-            <template v-if="hasAdminRole || hasSuperRole">
+            <template v-if="hasAdminRole || hasSuperRole || hasSuper2Role">
                 <!-- ------------------------------------------------------------------Tercer botón del menú desplegable -->
                 <button class="dropdown-header" @click="toggleMenu('otroSubmenu3')" :class="{ 'active': isExpanded['otroSubmenu3'] }">
                     <div class="menu-title">
@@ -147,13 +147,13 @@
                 <!-- Contenido del Tercer menú -->
                 <transition name="slide">
                     <ul v-if="isExpanded['otroSubmenu3']" class="dropdown-content">
-                        
+
                         <li v-if="hasAdminRole">
                             <router-link to="/User" class="dropdown-item">
                                 <i class="fas fa-id-card"></i> Datos personales de Almacén
                             </router-link>
                         </li>
-                        <li v-if="hasSuperRole">
+                        <li v-if="hasSuper2Role">
                             <router-link to="/Asistencia" class="dropdown-item">
                                 <i class="fas fa-toolbox"></i> Asistencia
                             </router-link>
@@ -163,7 +163,7 @@
                                 <i class="fas fa-toolbox"></i> Asistencia Almacen
                             </router-link>
                         </li>
-                      
+
                     </ul>
                 </transition>
             </template>
@@ -322,11 +322,12 @@ export default {
     },
     computed: {
         ...mapState(['rol']),
+        
         rolDisplayName() {
             if (Array.isArray(this.rol)) {
                 return this.rol.join(', ').replace('ROLE_', '');
             }
-            
+
         },
         hasAdminRole() {
             if (Array.isArray(this.rol)) {
@@ -341,7 +342,12 @@ export default {
             }
             return this.rol === 'ROLE_SUPER';
         },
-
+        hasSuper2Role() {
+            if (Array.isArray(this.rol)) {
+                return this.rol.includes('ROLE_SUPER2');
+            }
+            return this.rol === 'ROLE_SUPER2';
+        },
         hasUserRole() {
             if (Array.isArray(this.rol)) {
                 return this.rol.includes('ROLE_USER');
@@ -672,7 +678,7 @@ export default {
     width: 100%;
     background-color: var(--primary-color);
     padding: 10px 0;
-    
+
     z-index: 990;
 }
 
