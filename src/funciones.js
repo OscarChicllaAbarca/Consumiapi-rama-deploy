@@ -63,3 +63,5 @@ export function tieneRol(rolRequerido) {
     const store = useStore();
     return store.state.rol === rolRequerido;
   }
+
+

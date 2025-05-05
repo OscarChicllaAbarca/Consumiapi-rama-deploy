@@ -27,7 +27,7 @@
         <div class="form-group">
             <label for="cantidad">Cantidad (Q):</label>
             <input type="number" v-model="productData.cantidad" required min="0.0" step="0.01" :class="{'input-field animate-field': true, 'is-invalid': productData.cantidad < 0}">
-            <span v-if="productData.cantidad <= 0" class="error animate-fade-in">Esta colocando una cantidad igual o menor a 0.</span>
+            <span v-if="productData.cantidad <= 0" class="error animate-fade-in">Esta colocando una cantidad igual o menor a 0  !!Cuidado!! </span>
         </div>
 
         <div class="form-group">
@@ -139,7 +139,7 @@ export default {
             return (
                 this.productData.producto !== '' &&
                 this.productData.descripcionProducto !== '' &&
-                this.productData.cantidad > 0 &&
+                this.productData.cantidad >= 0 &&
                 this.productData.centro !== '' &&
                 this.productData.codigoInventario !== '' &&
                 this.validarFechaVencimiento

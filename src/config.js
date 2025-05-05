@@ -1,6 +1,5 @@
 export default {
-   
    //nuevo
-   BASE_URL: 'https://remark-cb-birthday-greetings.trycloudflare.com'
-   //BASE_URL: 'http://localhost:9090'
+   //BASE_URL: 'https://saver-beatles-viking-agreement.trycloudflare.com'
+   BASE_URL: 'http://localhost:9090'
 };
