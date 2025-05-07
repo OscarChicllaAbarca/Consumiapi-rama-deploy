@@ -49,9 +49,11 @@
                     <i class="fas fa-sync-alt"></i>
                     <span class="btn-text">Restablecer</span>
                 </button>
-                <button @click="mostrarTerminosCondiciones()" class="btn-reset">
-                    <i class="fas fa-check-circle"></i>
-                    <span class="btn-text">Aceptar Términos y Condiciones</span>
+                <button @click="mostrarTerminosCondiciones()" :class="['btn-terminos', yaAceptado ? 'btn-aceptado' : 'btn-reset']">
+                    <i :class="yaAceptado ? 'fas fa-check-circle' : 'fas fa-file-signature'"></i>
+                    <span class="btn-text">
+                        {{ yaAceptado ? 'Términos Aceptados' : 'Aceptar Términos y Condiciones' }}
+                    </span>
                 </button>
 
                 <button @click="exportarCodigoExcel(codigoInventario)" class="btn-buscar">
@@ -434,13 +436,7 @@
     </div>
 
     <!-- Al final del template, antes de cerrar el div principal -->
-    <TerminosCondicionesModal
-    :show="mostrarModalTerminos"
-    :codigoInventarioActual="codigoInventario"
-    :datosResumen="resumenDatosActuales"
-    @aceptado="onTerminosAceptados"
-    @cerrar="onModalTerminosCerrado"
-    />
+    <TerminosCondicionesModal :show="mostrarModalTerminos" :codigoInventarioActual="codigoInventario" :datosResumen="resumenDatosActuales" @aceptado="onTerminosAceptados" @cerrar="onModalTerminosCerrado" />
 </div>
 </template>
 
@@ -543,6 +539,12 @@ export default {
         mostrarTerminosCondiciones() {
             if (!this.codigoInventario) {
                 alert('Debe seleccionar un código de inventario');
+                return;
+            }
+
+            // Solo mostrar el modal si los términos no han sido ya aceptados por el usuario actual
+            if (this.yaAceptado) {
+                alert('Ya has aceptado los términos y condiciones para este código de inventario.');
                 return;
             }
 
@@ -676,6 +678,7 @@ export default {
             }
         },
         /** ---------------------------------------------------------------------------------------------------------*/
+        // Modifica el método fetchComparacion en tu componente Vue
         async fetchComparacion() {
             console.log('Código de inventario seleccionado:', this.codigoInventario);
             if (!this.codigoInventario) return; // Evita llamadas innecesarias
@@ -683,19 +686,57 @@ export default {
             this.isLoading = true; // Mostrar loading antes de la petición
 
             try {
+                // Realizar ambas peticiones en paralelo usando Promise.all
+                const [resultadosResponse, estadoResponse] = await Promise.all([
+                    // Primera petición: obtener los resultados combinados
+                    axios.get(`${config.BASE_URL}/api/hanna/resultadosCombinados`, {
+                        withCredentials: true,
+                        params: {
+                            codigoInventario: this.codigoInventario
+                        }
+                    }),
 
-                // Si la sesión es válida, obtenemos los datos
-                const response = await axios.get(`${config.BASE_URL}/api/hanna/resultadosCombinados`, {
-                    withCredentials: true, // Incluir cookies y credenciales en la solicitud
-                    params: {
-                        codigoInventario: this.codigoInventario
-                    }
-                });
+                    // Segunda petición: verificar el estado de los términos
+                    axios.get(`${config.BASE_URL}/api/terminos/estado/${this.codigoInventario}`, {
+                        withCredentials: true
+                    })
+                ]);
 
-                this.datos = response.data;
+                // Procesar los resultados de inventario
+                this.datos = resultadosResponse.data;
                 console.log('Datos cargados:', this.datos);
+
+                // Procesar los resultados del estado de términos
+                const estadoTerminos = estadoResponse.data;
+                console.log('Estado de términos:', estadoTerminos);
+
+                // Actualizar el estado de aceptación en el componente
+                this.yaAceptado = estadoTerminos.aceptado || false;
+
+                // Si ya hay términos aceptados, mostrar un mensaje informativo
+                if (estadoTerminos.aceptado) {
+                    // Opcional: mostrar una notificación o mensaje
+                    console.log(`Términos ya aceptados el ${new Date(estadoTerminos.fechaAceptacion).toLocaleString()}`);
+                } else if (estadoTerminos.codigoExiste && !estadoTerminos.aceptado) {
+                    // Si el código existe pero fue aceptado por otro usuario
+                    console.log(`Este código ya fue aceptado por: ${estadoTerminos.usuarioQueAcepto}`);
+                }
+
+                // Si hay información de resumen disponible, actualizar los datos del resumen
+                if (estadoTerminos.resumen) {
+                    // Opcional: actualizar el resumen con los datos guardados
+                    console.log('Resumen guardado:', estadoTerminos.resumen);
+                }
+
             } catch (error) {
                 console.error('Error al obtener la información:', error);
+
+                // Manejar errores específicos si es necesario
+                if (error.response && error.response.status === 401) {
+                    alert('Sesión no válida. Por favor, inicie sesión nuevamente.');
+                } else {
+                    alert('Error al cargar la información. Por favor, intente nuevamente.');
+                }
             } finally {
                 this.isLoading = false; // Ocultar loading después de la petición
             }
@@ -2094,16 +2135,65 @@ export default {
 
 /* Estilos específicos para el botón de términos */
 .filtro-acciones .btn-reset {
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .filtro-acciones .btn-reset:hover {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
+    background-color: #4caf50;
+    color: white;
+    border-color: #4caf50;
 }
 
 .filtro-acciones .btn-reset i {
-  margin-right: 5px;
+    margin-right: 5px;
 }
+
+/* Estilos base para el botón de términos */
+.btn-terminos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+/* Estilo cuando los términos NO han sido aceptados (gris) */
+.btn-reset {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.btn-reset:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilo cuando los términos YA han sido aceptados (verde) */
+.btn-aceptado {
+  background-color: #4caf50;
+  color: white;
+  pointer-events: none; /* Opcional: desactiva clics si ya está aceptado */
+}
+
+.btn-aceptado:hover {
+  background-color: #45a049;
+  transform: none; /* No se eleva al pasar el cursor */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-aceptado i {
+  color: white;
+  font-size: 1.1rem;
+}
+
 </style>
