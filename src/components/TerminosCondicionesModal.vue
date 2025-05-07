@@ -6,7 +6,7 @@
         <button @click="cerrarModal" class="modal-cerrar">&times;</button>
       </div>
 
-      <div class="modal-body">
+      <div class="modal-body" ref="modalContent">
         <div class="codigo-info">
           <h3>Código de Inventario: {{ codigoInventarioActual }}</h3>
         </div>
@@ -60,6 +60,30 @@
             </ul>
           </div>
         </div>
+
+        <!-- Área de firma -->
+        <div class="firma-container">
+          <h3>Firma Digital</h3>
+          <div class="firma-area">
+            <canvas 
+              ref="firmaCanvas" 
+              class="firma-canvas" 
+              @mousedown="iniciarFirma" 
+              @mousemove="dibujarFirma" 
+              @mouseup="finalizarFirma"
+              @mouseleave="finalizarFirma"
+              @touchstart="iniciarFirmaTactil"
+              @touchmove="dibujarFirmaTactil"
+              @touchend="finalizarFirma"
+            ></canvas>
+            <div class="firma-instrucciones">Firme aquí con el mouse o pantalla táctil</div>
+          </div>
+          <div class="firma-botones">
+            <button @click="limpiarFirma" class="btn-limpiar-firma">
+              <i class="fas fa-eraser"></i> Limpiar Firma
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -71,10 +95,21 @@
           <i class="fas fa-times-circle"></i>
           <span class="btn-text">Cancelar</span>
         </button>
+        
+        <!-- Botón para descargar PDF -->
+        <button 
+          @click="generarPDF" 
+          class="btn-pdf"
+          :disabled="isLoading"
+        >
+          <i class="fas fa-file-pdf"></i>
+          <span class="btn-text">{{ isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF' }}</span>
+        </button>
+        
         <button 
           @click="aceptarTerminos" 
           class="btn-buscar"
-          :disabled="isLoading || yaAceptado"
+          :disabled="isLoading || yaAceptado || !hayFirma"
         >
           <i :class="isLoading ? 'fas fa-spinner fa-spin' : (yaAceptado ? 'fas fa-check-circle' : 'fas fa-file-signature')"></i>
           <span class="btn-text">{{ isLoading ? 'Procesando...' : (yaAceptado ? 'Ya Aceptado' : 'Aceptar') }}</span>
@@ -87,6 +122,8 @@
 <script>
 import axios from 'axios';
 import config from '../config';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default {
   name: 'TerminosCondicionesModal',
@@ -108,7 +145,13 @@ export default {
     return {
       observacion: '',
       isLoading: false,
-      yaAceptado: false
+      isGeneratingPDF: false,
+      yaAceptado: false,
+      dibujando: false,
+      lastX: 0,
+      lastY: 0,
+      ctx: null,
+      hayFirma: false
     };
   },
   watch: {
@@ -116,16 +159,122 @@ export default {
       if (newVal) {
         this.observacion = '';
         this.isLoading = false;
+        this.hayFirma = false;
+        // Inicializar el canvas cuando se muestra el modal
+        this.$nextTick(() => {
+          this.initCanvas();
+        });
       }
     }
   },
   methods: {
+    initCanvas() {
+      const canvas = this.$refs.firmaCanvas;
+      if (!canvas) return;
+      
+      // Configurar el tamaño del canvas para que coincida con el área visible
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      
+      this.ctx = canvas.getContext('2d');
+      this.ctx.lineWidth = 2;
+      this.ctx.lineCap = 'round';
+      this.ctx.strokeStyle = '#0c534c';
+      
+      // Limpiar el canvas
+      this.limpiarFirma();
+    },
+    
+    iniciarFirma(event) {
+      this.dibujando = true;
+      const rect = this.$refs.firmaCanvas.getBoundingClientRect();
+      this.lastX = event.clientX - rect.left;
+      this.lastY = event.clientY - rect.top;
+    },
+    
+    dibujarFirma(event) {
+      if (!this.dibujando) return;
+      
+      const rect = this.$refs.firmaCanvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.lastX, this.lastY);
+      this.ctx.lineTo(x, y);
+      this.ctx.stroke();
+      
+      this.lastX = x;
+      this.lastY = y;
+      
+      // Indicar que hay una firma
+      this.hayFirma = true;
+    },
+    
+    // Soporte para pantallas táctiles
+    iniciarFirmaTactil(event) {
+      event.preventDefault(); // Prevenir desplazamiento
+      this.dibujando = true;
+      const rect = this.$refs.firmaCanvas.getBoundingClientRect();
+      const touch = event.touches[0];
+      this.lastX = touch.clientX - rect.left;
+      this.lastY = touch.clientY - rect.top;
+    },
+    
+    dibujarFirmaTactil(event) {
+      event.preventDefault(); // Prevenir desplazamiento
+      if (!this.dibujando) return;
+      
+      const rect = this.$refs.firmaCanvas.getBoundingClientRect();
+      const touch = event.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.lastX, this.lastY);
+      this.ctx.lineTo(x, y);
+      this.ctx.stroke();
+      
+      this.lastX = x;
+      this.lastY = y;
+      
+      // Indicar que hay una firma
+      this.hayFirma = true;
+    },
+    
+    finalizarFirma() {
+      this.dibujando = false;
+    },
+    
+    limpiarFirma() {
+      if (!this.ctx) return;
+      
+      this.ctx.clearRect(0, 0, this.$refs.firmaCanvas.width, this.$refs.firmaCanvas.height);
+      
+      // Dibujar línea base para la firma
+      this.ctx.beginPath();
+      this.ctx.moveTo(10, this.$refs.firmaCanvas.height - 10);
+      this.ctx.lineTo(this.$refs.firmaCanvas.width - 10, this.$refs.firmaCanvas.height - 10);
+      this.ctx.stroke();
+      
+      this.hayFirma = false;
+    },
+    
     async aceptarTerminos() {
+      if (!this.hayFirma) {
+        alert('Debe firmar antes de aceptar los términos y condiciones.');
+        return;
+      }
+      
       this.isLoading = true;
       try {
+        // Capturar la firma como una imagen base64
+        const firmaDataUrl = this.$refs.firmaCanvas.toDataURL('image/png');
+        
         const data = {
           codigoInventario: this.codigoInventarioActual,
           observacion: this.observacion,
+          firma: firmaDataUrl, // Incluir la firma en los datos enviados
           resumen: {
             faltanteSku: this.datosResumen.faltanteSku,
             faltanteValor: this.datosResumen.faltanteValor,
@@ -140,7 +289,13 @@ export default {
           withCredentials: true
         });
 
+        // Establecer yaAceptado como verdadero para actualizar la UI
+        this.yaAceptado = true;
+        
+        // Emitir evento de aceptado para que el componente padre actualice su estado
         this.$emit('aceptado', response.data);
+        
+        // Cerrar el modal
         this.cerrarModal();
       } catch (error) {
         console.error('Error al aceptar términos:', error);
@@ -149,9 +304,58 @@ export default {
         this.isLoading = false;
       }
     },
+    
+    async generarPDF() {
+      if (!this.hayFirma) {
+        alert('Debe firmar antes de generar el PDF.');
+        return;
+      }
+      
+      this.isGeneratingPDF = true;
+      try {
+        const contentElement = this.$refs.modalContent;
+        const canvas = await html2canvas(contentElement, {
+          scale: 2, // Mayor calidad
+          useCORS: true,
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Crear un nuevo documento PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        // Dimensiones del PDF
+        const imgWidth = 210; // A4 width en mm
+        const pageHeight = 297; // A4 height en mm
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Agregar información adicional al PDF
+        pdf.setFontSize(10);
+        const fechaActual = new Date().toLocaleString('es-PE');
+        pdf.text(`Documento generado el: ${fechaActual}`, 10, pageHeight - 10);
+        
+        // Descargar el PDF
+        pdf.save(`Terminos_${this.codigoInventarioActual}.pdf`);
+        
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('Error al generar el PDF. Por favor, intente nuevamente.');
+      } finally {
+        this.isGeneratingPDF = false;
+      }
+    },
+    
     cerrarModal() {
       this.$emit('cerrar');
     },
+    
     formatearPrecio(precio) {
       if (precio == null || isNaN(precio)) {
         return '0.00';
@@ -166,6 +370,121 @@ export default {
 </script>
 
 <style scoped>
+/* Estilos para el área de firma */
+.firma-container {
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+.firma-container h3 {
+  color: #0c534c;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.firma-area {
+  position: relative;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.firma-area:hover {
+  border-color: #0c534c;
+  background-color: #f5f9f7;
+}
+
+.firma-canvas {
+  width: 100%;
+  height: 150px;
+  cursor: crosshair;
+  touch-action: none; /* Evita el desplazamiento en pantallas táctiles */
+}
+
+.firma-instrucciones {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 0.9rem;
+  text-align: center;
+  pointer-events: none; /* Permitir clics a través del texto */
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.firma-area:hover .firma-instrucciones {
+  opacity: 0.4;
+}
+
+.firma-botones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-limpiar-firma {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.btn-limpiar-firma:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.btn-limpiar-firma i {
+  font-size: 1rem;
+}
+
+/* Estilo para el botón PDF */
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  min-width: 140px;
+  position: relative;
+  overflow: hidden;
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-pdf:hover:not(:disabled) {
+  background-color: #c0392b;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.btn-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-pdf i {
+  font-size: 1.1rem;
+}
 /* ===== MODAL OVERLAY ===== */
 .modal-overlay {
   position: fixed;
