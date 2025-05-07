@@ -563,9 +563,17 @@ export default {
 
         // Maneja cuando se acepta el modal
         onTerminosAceptados(response) {
-            console.log('Términos aceptados:', response);
-            alert('¡Términos y condiciones aceptados exitosamente!');
-            // Aquí puedes agregar lógica adicional después de aceptar
+            // Actualizar inmediatamente el estado para reflejar que se aceptaron los términos
+            this.yaAceptado = true;
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Términos aceptados!',
+                text: 'Los términos y condiciones han sido aceptados exitosamente.',
+                timer: 2000
+            });
+            // Cerrar el modal después de aceptar
+            this.mostrarModalTerminos = false;
         },
 
         // Maneja cuando se cierra el modal
@@ -2150,50 +2158,51 @@ export default {
 
 /* Estilos base para el botón de términos */
 .btn-terminos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
-  position: relative;
-  overflow: hidden;
-  font-size: 0.9rem;
-  min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+    font-size: 0.9rem;
+    min-width: 120px;
 }
 
 /* Estilo cuando los términos NO han sido aceptados (gris) */
 .btn-reset {
-  background-color: #f0f0f0;
-  color: #333;
+    background-color: #f0f0f0;
+    color: #333;
 }
 
 .btn-reset:hover {
-  background-color: #e0e0e0;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #e0e0e0;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Estilo cuando los términos YA han sido aceptados (verde) */
 .btn-aceptado {
-  background-color: #4caf50;
-  color: white;
-  pointer-events: none; /* Opcional: desactiva clics si ya está aceptado */
+    background-color: #4caf50;
+    color: white;
+    pointer-events: none;
+    /* Opcional: desactiva clics si ya está aceptado */
 }
 
 .btn-aceptado:hover {
-  background-color: #45a049;
-  transform: none; /* No se eleva al pasar el cursor */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #45a049;
+    transform: none;
+    /* No se eleva al pasar el cursor */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .btn-aceptado i {
-  color: white;
-  font-size: 1.1rem;
+    color: white;
+    font-size: 1.1rem;
 }
-
 </style>
