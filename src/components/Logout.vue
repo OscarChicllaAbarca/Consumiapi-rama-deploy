@@ -4,12 +4,12 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
-
 const logout = async () => {
   try {
-    await axios.post("http://localhost:9090/logout", {}, { withCredentials: true });
+    await axios.post(`${config.BASE_URL}/login/logout`, {}, { withCredentials: true });
     
-    // Redirige al usuario al login después del logout
+    // Eliminar cookies al hacer logout
+    Cookies.remove('tk');
     router.push("/");
   } catch (error) {
     console.error("Error en el logout:", error);

@@ -88,6 +88,11 @@
                                 <i class="fas fa-users-cog"></i> Carga Inventario
                             </router-link>
                         </li>
+                        <li>
+                            <router-link to="/Aprobar" class="dropdown-item">
+                                <i class="fas fa-box"></i> Aprobacion de Inventarios
+                            </router-link>
+                        </li>
                     </template>
 
                     <template v-if="hasAdminRole || hasSuperRole|| hasSuper2Role">
@@ -111,6 +116,7 @@
                                 <i class="fas fa-box"></i> Comparativo de Productos
                             </router-link>
                         </li>
+                       
                     </template>
                 </ul>
             </transition>
@@ -153,11 +159,11 @@
                                 <i class="fas fa-id-card"></i> Datos personales de Almacén
                             </router-link>
                         </li>
-                        <li v-if="hasSuper2Role">
+                        
                             <router-link to="/Asistencia" class="dropdown-item">
                                 <i class="fas fa-toolbox"></i> Asistencia
                             </router-link>
-                        </li>
+                        
                         <li v-if="hasAdminRole">
                             <router-link to="/Asistencia" class="dropdown-item">
                                 <i class="fas fa-toolbox"></i> Asistencia Almacen

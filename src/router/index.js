@@ -18,6 +18,8 @@ import RepotTimeView from '@/views/RepotTimeView.vue';
 import AsistenciaView from '@/views/AsistenciaView.vue';
 import UserDashboardView from '@/views/UserDashboardView.vue';
 import ComProductoView from '@/views/ComProductoView.vue';
+import RecoverAccessView from '@/views/RecoverAccessView.vue';
+import AprovacionView from '@/views/AprovacionView.vue';
 import { Path } from 'three';
 import axios from "axios";
 import config from "@/config"; // Ajusta la ruta de tu configuración
@@ -29,7 +31,20 @@ const routes = [
   {
     path: '/',
     name: 'Login',
-    component: LoginView
+    component: LoginView,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/recover',
+    name: 'RecoverAccess',
+    component: RecoverAccessView,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/Aprobar',
+    name: 'AprovacionView',
+    component: AprovacionView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/toma',
@@ -135,11 +150,10 @@ const router = createRouter({
 
 
 
-
 // Validación del estado del usuario antes de cada ruta
 router.beforeEach(async (to, from, next) => {
-  // Si va al login, no verifica nada
-  if (to.path === "/") {
+  // Si va al login o a la página de recuperación, no verifica nada
+  if (to.path === "/" || to.path === "/recover") {
     return next();
   }
   
@@ -188,5 +202,4 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 });
-
 export default router;
