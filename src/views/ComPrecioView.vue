@@ -386,7 +386,7 @@
                                 <i class="fas fa-calendar-alt"></i> Fecha Inventario
                             </div>
                         </th>
-                        <th v-for="(key, invIndex) in Object.keys((paginatedData[0] || {}).inventarios || {})" :key="invIndex">
+                        <th v-for="(key, invIndex) in Object.keys(((paginatedData[0] || {}).inventarios) || {})" :key="invIndex">
                             <div class="th-content">
                                 <i class="fas fa-cubes"></i> Inv-{{ invIndex + 1 }}
                             </div>
@@ -535,6 +535,34 @@ export default {
     },
 
     methods: {
+
+convertirFechaADate(fecha) {
+    if (!fecha || fecha === 'Fecha no disponible' || fecha === 'Fecha no encontrada' || fecha === 'N/A') {
+        return new Date(0); // Fecha mínima para valores inválidos
+    }
+    
+    // Verificar si es una fecha en formato "MM/DD/YYYY"
+    if (fecha.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+        const [month, day, year] = fecha.split('/');
+        return new Date(year, month - 1, day);
+    }
+    
+    // Verificar si es un formato como "Enero 2024" 
+    const meses = {
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
+        'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+    };
+    
+    for (const [nombreMes, indice] of Object.entries(meses)) {
+        if (fecha.toLowerCase().includes(nombreMes)) {
+            const year = fecha.match(/\d{4}/)[0];
+            return new Date(parseInt(year), indice, 1);
+        }
+    }
+    
+    // Si no se pudo convertir, retornar fecha mínima
+    return new Date(0);
+},
         //mostar modal 
         mostrarTerminosCondiciones() {
             if (!this.codigoInventario) {
@@ -595,38 +623,49 @@ export default {
                 length: endPage - startPage + 1
             }, (_, i) => i + startPage);
         },
+
         calcularFechaInventario(codigoInventario) {
             switch (codigoInventario) {
-                case 'INVCICL2024441':
-                    return 'Octubre 2024';
-                case 'INVCICL20244510':
-                    return 'Noviembre 2024';
-                case 'INVCICL2024451':
-                    return 'Noviembre 2024';
-                case 'INVGENE2024473':
-                    return 'Diciembre 2024';
-                case 'INVCICL2024501':
-                    return 'Diciembre 2024';
-                case 'INVCICL2024511':
-                    return 'Diciembre 2024';
-                case 'INVCONT202511':
-                    return 'Marzo 2025';
-                case 'INVCICL202521':
-                    return 'Mayo 2025';
-                case 'INVCICL202532':
-                    return 'Agosto 2025';
-                case 'INVINOP202543':
-                    return 'Octubre 2025';
-                case 'INVCICL202554':
-                    return 'Diciembre 2025';
-                case 'INVCICL202565':
-                    return 'Marzo 2026';
-                case 'INVCICL202576':
-                    return 'Mayo 2026';
-                case 'INVINOP202587':
-                    return 'Julio 2026';
-                default:
-                    return 'Fecha no encontrada';
+                case 'INVCICL202521': 
+                    return '10/01/2025';   // Antes: 1/1/2025
+                case 'INVCICL202532': 
+                    return '20/01/2025';  // Antes: 6/1/2025
+                case 'INVINOP202543': 
+                    return '25/01/2025'; // Antes: 13/01/2025
+                case 'INVCICL202554': 
+                    return '01/02/2025'; // Antes: 20/01/2025
+                case 'INVCICL202565': 
+                    return '08/02/2025';  // Antes: 27/01/2025
+                case 'INVCICL202576': 
+                    return '15/02/2025';  // Antes: 3/2/2025
+                case 'INVINOP202587': 
+                    return '22/02/2025';  // Antes: 10/2/2025
+                case 'INVCICL202598': 
+                    return '01/03/2025'; // Antes: 17/02/2025
+                case 'INVCICL2025109': 
+                    return '08/03/2025';  // Antes: 24/02/2025
+                case 'INVCICL20251110': 
+                    return '15/03/2025';  // Antes: 3/3/2025
+                case 'INVINOP20251211': 
+                    return '22/03/2025';  // Antes: 10/3/2025
+                case 'INVCICL20251312': 
+                    return '29/03/2025'; // Antes: 17/03/2025
+                case 'INVCICL20251413': 
+                    return '05/04/2025'; // Antes: 24/03/2025
+                case 'INVCICL20251514': 
+                    return '10/04/2025';   // Antes: 31/3/2025
+                case 'INVCONT20251716': 
+                    return '28/04/2025'; // Antes: 14/04/2025
+                case 'INVCONT20251715': 
+                    return '03/05/2025'; // Antes: 21/04/2025
+                case 'INVCICL20251918': 
+                    return '10/05/2025';   // Antes: 28/4/2025
+                case 'INVINOP20252019': 
+                    return '17/05/2025';  // Antes: 5/5/2025
+                case 'INVCICL20252120': 
+                    return '24/05/2025'; // Antes: 12/05/2025
+                default: 
+                    return 'Fecha no Encontrada';         // Return null for unmatched codes
             }
         },
 
@@ -656,18 +695,25 @@ export default {
                 return;
             }
 
-            const producto = encodeURIComponent(this.filaSeleccionada.producto); // Evita problemas con caracteres especiales
+            const producto = encodeURIComponent(this.filaSeleccionada.producto);
 
             try {
-
                 // Realizar la consulta del historial
                 const response = await axios.get(`${config.BASE_URL}/api/report?producto=${producto}`, {
-                    withCredentials: true, // Asegura que la cookie se envíe
-                    timeout: 5000, // Evita bloqueos en la solicitud
+                    withCredentials: true,
+                    timeout: 5000,
                 });
 
                 if (response.status === 200 && Array.isArray(response.data)) {
-                    this.paginatedData = response.data;
+                    // Process the data to ensure each item has an inventarios property
+                    this.paginatedData = response.data.map(item => {
+                        return {
+                            ...item,
+                            // Ensure inventarios exists, default to empty object if not
+                            inventarios: item.inventarios || {}
+                        };
+                    });
+
                     console.log('Datos recibidos:', this.paginatedData);
                 } else {
                     console.warn('La respuesta de la API no tiene el formato esperado:', response.data);

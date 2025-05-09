@@ -151,8 +151,9 @@
                   </div>
                 </th>
                 <th>
-                  <div class="th-content">
+                  <div class="th-content sortable" @click="sortBy('fechaInventario')">
                     <i class="fas fa-calendar-alt"></i> Fecha Inventario
+                    <i class="fas fa-sort" :class="getSortIcon('fechaInventario')"></i>
                   </div>
                 </th>
                 <th>
@@ -454,31 +455,47 @@ export default {
             this.selectedInventoryCode = code;
           }
         },
-        sortBy(column) {
-          // Si es la misma columna, invertir dirección
-          if (this.sortColumn === column) {
-            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-          } else {
-            this.sortColumn = column;
-            this.sortDirection = 'asc';
-          }
-          
-          // Ordenar los datos según la columna seleccionada
-          if (this.apiResponse && this.apiResponse.length > 0) {
-            this.apiResponse = [...this.apiResponse].sort((a, b) => {
-              let valueA = a[column] || '';
-              let valueB = b[column] || '';
-              
-              // Convertir a minúsculas si son cadenas
-              if (typeof valueA === 'string') valueA = valueA.toLowerCase();
-              if (typeof valueB === 'string') valueB = valueB.toLowerCase();
-              
-              if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
-              if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
-              return 0;
-            });
-          }
-        },
+       sortBy(column) {
+  // Si es la misma columna, invertir dirección
+  if (this.sortColumn === column) {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    this.sortColumn = column;
+    this.sortDirection = 'asc';
+  }
+  
+  // Ordenar los datos según la columna seleccionada
+  if (this.apiResponse && this.apiResponse.length > 0) {
+    this.apiResponse = [...this.apiResponse].sort((a, b) => {
+      // Caso especial para fechaInventario
+      if (column === 'fechaInventario') {
+        // Obtener la fecha a partir del código de inventario
+        const fechaA = this.calcularFechaInventario(a.codigoInventario);
+        const fechaB = this.calcularFechaInventario(b.codigoInventario);
+        
+        // Convertir fechas a objetos Date para comparación
+        const dateA = this.convertirFechaADate(fechaA);
+        const dateB = this.convertirFechaADate(fechaB);
+        
+        if (dateA < dateB) return this.sortDirection === 'asc' ? -1 : 1;
+        if (dateA > dateB) return this.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      } else {
+        // Para otras columnas, mantener la lógica original
+        let valueA = a[column] || '';
+        let valueB = b[column] || '';
+        
+        // Convertir a minúsculas si son cadenas
+        if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+        if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+        
+        if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+        if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+    });
+  }
+},
         
         getSortIcon(column) {
           if (this.sortColumn !== column) return '';
@@ -497,27 +514,47 @@ export default {
           
           // Mapeo de códigos a fechas específicas
           switch (codigoInventario) {
-            case 'INVGENE2024473':
-              return 'Diciembre 2024';
-            case 'INVCONT202511':
-              return 'Marzo 2025';
-            case 'INVCICL202521':
-              return 'Mayo 2025';
-            case 'INVCICL202532':
-              return 'Agosto 2025';
-            case 'INVINOP202543':
-              return 'Octubre 2025';
-            case 'INVCICL202554':
-              return 'Diciembre 2025';
-            case 'INVCICL202565':
-              return 'Marzo 2026';
-            case 'INVCICL202576':
-              return 'Mayo 2026';
-            case 'INVINOP202587':
-              return 'Julio 2026';
-            default:
-              return `${year}-${week || ''}`;
-          }
+                case 'INVCICL202521': 
+                    return '10/01/2025';   // Antes: 1/1/2025
+                case 'INVCICL202532': 
+                    return '20/01/2025';  // Antes: 6/1/2025
+                case 'INVINOP202543': 
+                    return '25/01/2025'; // Antes: 13/01/2025
+                case 'INVCICL202554': 
+                    return '01/02/2025'; // Antes: 20/01/2025
+                case 'INVCICL202565': 
+                    return '08/02/2025';  // Antes: 27/01/2025
+                case 'INVCICL202576': 
+                    return '15/02/2025';  // Antes: 3/2/2025
+                case 'INVINOP202587': 
+                    return '22/02/2025';  // Antes: 10/2/2025
+                case 'INVCICL202598': 
+                    return '01/03/2025'; // Antes: 17/02/2025
+                case 'INVCICL2025109': 
+                    return '08/03/2025';  // Antes: 24/02/2025
+                case 'INVCICL20251110': 
+                    return '15/03/2025';  // Antes: 3/3/2025
+                case 'INVINOP20251211': 
+                    return '22/03/2025';  // Antes: 10/3/2025
+                case 'INVCICL20251312': 
+                    return '29/03/2025'; // Antes: 17/03/2025
+                case 'INVCICL20251413': 
+                    return '05/04/2025'; // Antes: 24/03/2025
+                case 'INVCICL20251514': 
+                    return '10/04/2025';   // Antes: 31/3/2025
+                case 'INVCONT20251716': 
+                    return '28/04/2025'; // Antes: 14/04/2025
+                case 'INVCICL20251817': 
+                    return '03/05/2025'; // Antes: 21/04/2025
+                case 'INVCICL20251918': 
+                    return '10/05/2025';   // Antes: 28/4/2025
+                case 'INVINOP20252019': 
+                    return '17/05/2025';  // Antes: 5/5/2025
+                case 'INVCICL20252120': 
+                    return '24/05/2025'; // Antes: 12/05/2025
+                default: 
+                    return 'Fecha no Encontrada';         // Return null for unmatched codes
+            }
         },
 
     // Método para manejar la carga de archivos
