@@ -128,7 +128,7 @@ export default {
                 cantidad: 0,
                 lote: '',
                 unidadMedidaBase: '',
-                codigoInventario: 'INVCICL2025109',
+                codigoInventario: 'INVCICL20251918',
                 observacion: '',
                 medida: '',
                 fechaVencimiento: ''

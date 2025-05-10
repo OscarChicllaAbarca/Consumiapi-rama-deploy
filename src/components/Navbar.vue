@@ -46,80 +46,90 @@
             </ul>
         </div>
 
+
+
+
+
+
         <!-- Sidebar para pantallas grandes -->
         <div class="sidebar-menu">
             <!--------------------------------------------------------------------- Primer menú desplegable -->
-            <button class="dropdown-header" @click="toggleMenu('tomaSubmenu')" :class="{ 'active': isExpanded['tomaSubmenu'] }">
-                <div class="menu-title">
-                    <i class="fas fa-tasks"></i>
-                    <span>Detalle de Inventario</span>
-                </div>
-                <i class="fas" :class="isExpanded['tomaSubmenu'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-            </button>
+            
 
-            <!-- Contenido del primer menú -->
-            <transition name="slide">
-                <ul v-if="isExpanded['tomaSubmenu']" class="dropdown-content">
-                    <li>
-                        <router-link to="/listar_toma" class="dropdown-item">
-                            <i class="fas fa-list-alt"></i> Lista toma
-                        </router-link>
-                    </li>
-                    <li>
-                        <router-link to="/tomaino" class="dropdown-item">
-                            <i class="fas fa-check-square"></i> Toma Ino
-                        </router-link>
-                    </li>
-                    <li>
-                        <router-link to="/ListarInvent" class="dropdown-item">
-                            <i class="fas fa-clipboard-list"></i> Lista de Inventario
-                        </router-link>
-                    </li>
+            <template v-if="hasAdminRole || hasSuperRole || hasUserRole">
+                    <button class="dropdown-header" @click="toggleMenu('tomaSubmenu')" :class="{ 'active': isExpanded['tomaSubmenu'] }">
+                        <div class="menu-title">
+                            <i class="fas fa-tasks"></i>
+                            <span>Detalle de Inventario</span>
+                        </div>
+                        <i class="fas" :class="isExpanded['tomaSubmenu'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
 
-                    <!-- Estas rutas solo para ADMIN o SUPERVISOR -->
-                    <template v-if="hasAdminRole">
-                        <li>
-                            <router-link to="/Toma" class="dropdown-item">
-                                <i class="fas fa-upload"></i> Carga toma
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link to="/InsertInventariado" class="dropdown-item">
-                                <i class="fas fa-users-cog"></i> Carga Inventario
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link to="/Aprobar" class="dropdown-item">
-                                <i class="fas fa-box"></i> Aprobacion de Inventarios
-                            </router-link>
-                        </li>
-                    </template>
+                    <!-- Contenido del primer menú -->
+                    <transition name="slide">
+                        <ul v-if="isExpanded['tomaSubmenu']" class="dropdown-content">
+                            <li>
+                                <router-link to="/listar_toma" class="dropdown-item">
+                                    <i class="fas fa-list-alt"></i> Lista toma
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/tomaino" class="dropdown-item">
+                                    <i class="fas fa-check-square"></i> Toma Ino
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/ListarInvent" class="dropdown-item">
+                                    <i class="fas fa-clipboard-list"></i> Lista de Inventario
+                                </router-link>
+                            </li>
 
-                    <template v-if="hasAdminRole || hasSuperRole|| hasSuper2Role">
-                        <li>
-                            <router-link to="/ComPrecio" class="dropdown-item">
-                                <i class="fas fa-cogs"></i> Comparativo de Precio
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link to="/getObservaciones" class="dropdown-item">
-                                <i class="fas fa-exclamation-circle"></i> Estado de diferencias
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link to="/powerBI" class="dropdown-item">
-                                <i class="fas fa-chart-bar"></i> Reporte Completo
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link to="/ComProducto" class="dropdown-item">
-                                <i class="fas fa-box"></i> Comparativo de Productos
-                            </router-link>
-                        </li>
-                       
-                    </template>
-                </ul>
-            </transition>
+                            <!-- Estas rutas solo para ADMIN o SUPERVISOR -->
+                            <template v-if="hasAdminRole">
+                                <li>
+                                    <router-link to="/Toma" class="dropdown-item">
+                                        <i class="fas fa-upload"></i> Carga toma
+                                    </router-link>
+                                </li>
+                                <li>
+                                    <router-link to="/InsertInventariado" class="dropdown-item">
+                                        <i class="fas fa-users-cog"></i> Carga Inventario
+                                    </router-link>
+                                </li>
+                                <li>
+                                    <router-link to="/Aprobar" class="dropdown-item">
+                                        <i class="fas fa-box"></i> Aprobacion de Inventarios
+                                    </router-link>
+                                </li>
+                            </template>
+
+                            <template v-if="hasAdminRole || hasSuperRole">
+                                <li>
+                                    <router-link to="/ComPrecio" class="dropdown-item">
+                                        <i class="fas fa-cogs"></i> Comparativo de Precio
+                                    </router-link>
+                                </li>
+                                <li>
+                                    <router-link to="/getObservaciones" class="dropdown-item">
+                                        <i class="fas fa-exclamation-circle"></i> Estado de diferencias
+                                    </router-link>
+                                </li>
+                                <li>
+                                    <router-link to="/powerBI" class="dropdown-item">
+                                        <i class="fas fa-chart-bar"></i> Reporte Completo
+                                    </router-link>
+                                </li>
+                                <li>
+                                    <router-link to="/ComProducto" class="dropdown-item">
+                                        <i class="fas fa-box"></i> Comparativo de Productos
+                                    </router-link>
+                                </li>
+                            
+                            </template>
+
+                        </ul>
+                    </transition>
+            </template>
 
             <!--------------------------------------------------------------------- Segundo botón del menú desplegable -->
             <button class="dropdown-header" @click="toggleMenu('otroSubmenu')" :class="{ 'active': isExpanded['otroSubmenu'] }">
@@ -196,12 +206,12 @@
                 </transition>
             </template>
 
-            <template v-if="hasAdminRole">
+            <template v-if="hasZonal">
                 <!--------------------------------------------------------------------- Quinto Reporte-->
                 <button class="dropdown-header" @click="toggleMenu('otroSubmenu5')" :class="{ 'active': isExpanded['otroSubmenu5'] }">
                     <div class="menu-title">
                         <i class="fas fa-chart-line"></i>
-                        <span>REPORTE</span>
+                        <span>Aprobacion</span>
                     </div>
                     <i class="fas" :class="isExpanded['otroSubmenu5'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                 </button>
@@ -209,13 +219,21 @@
                 <transition name="slide">
                     <ul v-if="isExpanded['otroSubmenu5']" class="dropdown-content">
                         <li>
-                            <router-link to="/powerBI" class="dropdown-item">
-                                <i class="fas fa-file-alt"></i> REPORTE
+                             <router-link to="/ComPrecio" class="dropdown-item">
+                                <i class="fas fa-cogs"></i> Comparativo de Precio
                             </router-link>
                         </li>
+                         <li>
+                            <router-link to="/Aprobar" class="dropdown-item">
+                                <i class="fas fa-box"></i> Aprobacion de Inventarios
+                            </router-link>
+                        </li>
+
                     </ul>
                 </transition>
             </template>
+
+
             <button class="logout-button" @click="logout">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
             </button>
@@ -348,11 +366,11 @@ export default {
             }
             return this.rol === 'ROLE_SUPER';
         },
-        hasSuper2Role() {
+        hasZonal() {
             if (Array.isArray(this.rol)) {
-                return this.rol.includes('ROLE_SUPER2');
+                return this.rol.includes('ROLE_ZONAL');
             }
-            return this.rol === 'ROLE_SUPER2';
+            return this.rol === 'ROLE_ZONAL';
         },
         hasUserRole() {
             if (Array.isArray(this.rol)) {
