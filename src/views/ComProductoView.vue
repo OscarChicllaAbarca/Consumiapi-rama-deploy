@@ -552,6 +552,12 @@ export default {
                     return '17/05/2025';  // Antes: 5/5/2025
                 case 'INVCICL20252120': 
                     return '24/05/2025'; // Antes: 12/05/2025
+                case  'INVCONT202511': 
+                    return '03/01/2025'; // Antes: 19/05/2025
+                case  'INVCONT20251715': 
+                    return '25/04/2025'; // Antes: 19/05/2025
+                case  'INVGENE2024473': 
+                    return '27/11/2024'; // Antes: 19/05/2025
                 default: 
                     return 'Fecha no Encontrada';         // Return null for unmatched codes
             }

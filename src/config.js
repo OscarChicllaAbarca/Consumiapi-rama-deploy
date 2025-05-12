@@ -1,5 +1,5 @@
 export default {
    //nuevo
-   BASE_URL: 'https://conjunction-concert-dc-ef.trycloudflare.com'
-   //BASE_URL: 'http://localhost:8765'
+   //BASE_URL: 'https://conjunction-concert-dc-ef.trycloudflare.com'
+   BASE_URL: 'http://localhost:9090'
 };
