@@ -436,7 +436,9 @@
     </div>
 
     <!-- Al final del template, antes de cerrar el div principal -->
-    <TerminosCondicionesModal :show="mostrarModalTerminos" :codigoInventarioActual="codigoInventario" :datosResumen="resumenDatosActuales" @aceptado="onTerminosAceptados" @cerrar="onModalTerminosCerrado" />
+    <TerminosCondicionesModal :show="mostrarModalTerminos" 
+    :codigoInventarioActual="codigoInventario" :datosResumen="resumenDatosActuales" 
+    @aceptado="onTerminosAceptados" @cerrar="onModalTerminosCerrado" />
 </div>
 </template>
 
@@ -462,8 +464,8 @@ export default {
             datos: [],
             datosFiltrados: [], // Datos filtrados según los filtros
             codigosInventario: ['INVINOP202543', 'INVCICL202532', 'INVCICL202554', 'INVCICL202565', 'INVCICL202576', 'INVCICL202521',
-                'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110', 'INVCICL20251211', 
-                'INVCICL20251312', 'INVCICL20251413', 'INVCICL20251514', 'INVCONT20251715', 'INVCICL20251817','INVCICL20251918'
+                'INVINOP202587', 'INVCICL202598', 'INVCICL2025109', 'INVCICL20251110', 'INVCICL20251211',
+                'INVCICL20251312', 'INVCICL20251413', 'INVCICL20251514', 'INVCONT20251715', 'INVCICL20251817', 'INVCICL20251918'
             ],
 
             filtroEstado: '', // Estado seleccionado en el filtro
@@ -537,33 +539,43 @@ export default {
 
     methods: {
 
-convertirFechaADate(fecha) {
-    if (!fecha || fecha === 'Fecha no disponible' || fecha === 'Fecha no encontrada' || fecha === 'N/A') {
-        return new Date(0); // Fecha mínima para valores inválidos
-    }
-    
-    // Verificar si es una fecha en formato "MM/DD/YYYY"
-    if (fecha.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-        const [month, day, year] = fecha.split('/');
-        return new Date(year, month - 1, day);
-    }
-    
-    // Verificar si es un formato como "Enero 2024" 
-    const meses = {
-        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
-        'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
-    };
-    
-    for (const [nombreMes, indice] of Object.entries(meses)) {
-        if (fecha.toLowerCase().includes(nombreMes)) {
-            const year = fecha.match(/\d{4}/)[0];
-            return new Date(parseInt(year), indice, 1);
-        }
-    }
-    
-    // Si no se pudo convertir, retornar fecha mínima
-    return new Date(0);
-},
+        convertirFechaADate(fecha) {
+            if (!fecha || fecha === 'Fecha no disponible' || fecha === 'Fecha no encontrada' || fecha === 'N/A') {
+                return new Date(0); // Fecha mínima para valores inválidos
+            }
+
+            // Verificar si es una fecha en formato "MM/DD/YYYY"
+            if (fecha.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                const [month, day, year] = fecha.split('/');
+                return new Date(year, month - 1, day);
+            }
+
+            // Verificar si es un formato como "Enero 2024" 
+            const meses = {
+                'enero': 0,
+                'febrero': 1,
+                'marzo': 2,
+                'abril': 3,
+                'mayo': 4,
+                'junio': 5,
+                'julio': 6,
+                'agosto': 7,
+                'septiembre': 8,
+                'octubre': 9,
+                'noviembre': 10,
+                'diciembre': 11
+            };
+
+            for (const [nombreMes, indice] of Object.entries(meses)) {
+                if (fecha.toLowerCase().includes(nombreMes)) {
+                    const year = fecha.match(/\d{4}/)[0];
+                    return new Date(parseInt(year), indice, 1);
+                }
+            }
+
+            // Si no se pudo convertir, retornar fecha mínima
+            return new Date(0);
+        },
         //mostar modal 
         mostrarTerminosCondiciones() {
             if (!this.codigoInventario) {
@@ -627,55 +639,54 @@ convertirFechaADate(fecha) {
 
         calcularFechaInventario(codigoInventario) {
             switch (codigoInventario) {
-                case 'INVCICL202521': 
-                    return '10/01/2025';   // Antes: 1/1/2025
-                case 'INVCICL202532': 
-                    return '20/01/2025';  // Antes: 6/1/2025
-                case 'INVINOP202543': 
+                case 'INVCICL202521':
+                    return '10/01/2025'; // Antes: 1/1/2025
+                case 'INVCICL202532':
+                    return '20/01/2025'; // Antes: 6/1/2025
+                case 'INVINOP202543':
                     return '25/01/2025'; // Antes: 13/01/2025
-                case 'INVCICL202554': 
+                case 'INVCICL202554':
                     return '01/02/2025'; // Antes: 20/01/2025
-                case 'INVCICL202565': 
-                    return '08/02/2025';  // Antes: 27/01/2025
-                case 'INVCICL202576': 
-                    return '15/02/2025';  // Antes: 3/2/2025
-                case 'INVINOP202587': 
-                    return '22/02/2025';  // Antes: 10/2/2025
-                case 'INVCICL202598': 
+                case 'INVCICL202565':
+                    return '08/02/2025'; // Antes: 27/01/2025
+                case 'INVCICL202576':
+                    return '15/02/2025'; // Antes: 3/2/2025
+                case 'INVINOP202587':
+                    return '22/02/2025'; // Antes: 10/2/2025
+                case 'INVCICL202598':
                     return '01/03/2025'; // Antes: 17/02/2025
-                case 'INVCICL2025109': 
-                    return '08/03/2025';  // Antes: 24/02/2025
-                case 'INVCICL20251110': 
-                    return '15/03/2025';  // Antes: 3/3/2025
-                case 'INVINOP20251211': 
-                    return '22/03/2025';  // Antes: 10/3/2025
-                case 'INVCICL20251312': 
+                case 'INVCICL2025109':
+                    return '08/03/2025'; // Antes: 24/02/2025
+                case 'INVCICL20251110':
+                    return '15/03/2025'; // Antes: 3/3/2025
+                case 'INVINOP20251211':
+                    return '22/03/2025'; // Antes: 10/3/2025
+                case 'INVCICL20251312':
                     return '29/03/2025'; // Antes: 17/03/2025
-                case 'INVCICL20251413': 
+                case 'INVCICL20251413':
                     return '05/04/2025'; // Antes: 24/03/2025
-                case 'INVCICL20251514': 
-                    return '10/04/2025';   // Antes: 31/3/2025
-                case 'INVCONT20251716': 
+                case 'INVCICL20251514':
+                    return '10/04/2025'; // Antes: 31/3/2025
+                case 'INVCONT20251716':
                     return '28/04/2025'; // Antes: 14/04/2025
-                case 'INVCONT20251715': 
+                case 'INVCONT20251715':
                     return '03/05/2025'; // Antes: 21/04/2025
-                case 'INVCICL20251918': 
-                    return '10/05/2025';   // Antes: 28/4/2025
-                case 'INVINOP20252019': 
-                    return '17/05/2025';  // Antes: 5/5/2025
-                case 'INVCICL20252120': 
+                case 'INVCICL20251918':
+                    return '10/05/2025'; // Antes: 28/4/2025
+                case 'INVINOP20252019':
+                    return '17/05/2025'; // Antes: 5/5/2025
+                case 'INVCICL20252120':
                     return '24/05/2025'; // Antes: 12/05/2025
-                
 
-                case  'INVCONT202511': 
+                case 'INVCONT202511':
                     return '03/01/2025'; // Antes: 19/05/2025
-                case  'INVCONT20251715': 
+                case 'INVCONT20251715':
                     return '25/04/2025'; // Antes: 19/05/2025
-                case  'INVGENE2024473': 
+                case 'INVGENE2024473':
                     return '27/11/2024'; // Antes: 19/05/2025
 
-                default: 
-                    return 'Fecha no Encontrada';         // Return null for unmatched codes
+                default:
+                    return 'Fecha no Encontrada'; // Return null for unmatched codes
             }
         },
 
