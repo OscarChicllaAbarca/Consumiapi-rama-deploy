@@ -10,7 +10,6 @@
                 <div class="user-role">
                     <p>ROL: {{ rolDisplayName }}</p>
                 </div>
-                <br>
                 <div v-if="hasAdminRole">
                     <div class="user-role">
                         <div class="center-display">
@@ -453,7 +452,7 @@ export default {
         window.removeEventListener('resize', this.checkMobile);
     },
     mounted() {
-        this.obtenerSucursalActual();
+       
     },
     methods: {
         obtenerNombreSucursal(codigo) {
@@ -467,22 +466,7 @@ export default {
 
             return sucursales[codigo] || codigo;
         },
-        async obtenerSucursalActual() {
-            try {
-                const response = await fetch(`${config.BASE_URL}/api/user/sucursal`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    this.sucursalActual = data.sucursal;
-                }
-            } catch (error) {
-                console.error('Error al obtener sucursal:', error);
-
-            }
-        },
+        
         async cambiarSucursal() {
             if (!this.nuevaSucursal) {
                 return;
