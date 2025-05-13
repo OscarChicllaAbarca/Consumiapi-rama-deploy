@@ -10,6 +10,28 @@
                 <div class="user-role">
                     <p>ROL: {{ rolDisplayName }}</p>
                 </div>
+
+                <div v-if="hasAdminRole">
+                    <div class="user-role">
+                        <div class="center-display">
+                            <div class="change-center">
+                                <select v-model="nuevaSucursal" class="select-compact">
+                                    <option value="">Cambiar centro</option>
+                                    <option value="C152">Victoria</option>
+                                    <option value="C040">Arequipa</option>
+                                    <option value="C080">Cuzco</option>
+                                    <option value="C200">Piura</option>
+                                    <option value="C154">Lurin</option>
+                                </select>
+                                <button @click="cambiarSucursal" class="btn-compact" :disabled="cargando">
+                                    {{ cargando ? 'Actualizando...' : 'Camb. Sucursal' }}
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <button v-if="isMobile" class="close-sidebar" @click="toggleSidebar">
                 <i class="fas fa-times"></i>
@@ -46,89 +68,83 @@
             </ul>
         </div>
 
-
-
-
-
-
         <!-- Sidebar para pantallas grandes -->
         <div class="sidebar-menu">
             <!--------------------------------------------------------------------- Primer menú desplegable -->
-            
 
             <template v-if="hasAdminRole || hasSuperRole || hasUserRole">
-                    <button class="dropdown-header" @click="toggleMenu('tomaSubmenu')" :class="{ 'active': isExpanded['tomaSubmenu'] }">
-                        <div class="menu-title">
-                            <i class="fas fa-tasks"></i>
-                            <span>Detalle de Inventario</span>
-                        </div>
-                        <i class="fas" :class="isExpanded['tomaSubmenu'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                    </button>
+                <button class="dropdown-header" @click="toggleMenu('tomaSubmenu')" :class="{ 'active': isExpanded['tomaSubmenu'] }">
+                    <div class="menu-title">
+                        <i class="fas fa-tasks"></i>
+                        <span>Detalle de Inventario</span>
+                    </div>
+                    <i class="fas" :class="isExpanded['tomaSubmenu'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </button>
 
-                    <!-- Contenido del primer menú -->
-                    <transition name="slide">
-                        <ul v-if="isExpanded['tomaSubmenu']" class="dropdown-content">
+                <!-- Contenido del primer menú -->
+                <transition name="slide">
+                    <ul v-if="isExpanded['tomaSubmenu']" class="dropdown-content">
+                        <li>
+                            <router-link to="/listar_toma" class="dropdown-item">
+                                <i class="fas fa-list-alt"></i> Lista toma
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link to="/tomaino" class="dropdown-item">
+                                <i class="fas fa-check-square"></i> Toma Ino
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link to="/ListarInvent" class="dropdown-item">
+                                <i class="fas fa-clipboard-list"></i> Lista de Inventario
+                            </router-link>
+                        </li>
+
+                        <!-- Estas rutas solo para ADMIN o SUPERVISOR -->
+                        <template v-if="hasAdminRole">
                             <li>
-                                <router-link to="/listar_toma" class="dropdown-item">
-                                    <i class="fas fa-list-alt"></i> Lista toma
+                                <router-link to="/Toma" class="dropdown-item">
+                                    <i class="fas fa-upload"></i> Carga toma
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/tomaino" class="dropdown-item">
-                                    <i class="fas fa-check-square"></i> Toma Ino
+                                <router-link to="/InsertInventariado" class="dropdown-item">
+                                    <i class="fas fa-users-cog"></i> Carga Inventario
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/ListarInvent" class="dropdown-item">
-                                    <i class="fas fa-clipboard-list"></i> Lista de Inventario
+                                <router-link to="/Aprobar" class="dropdown-item">
+                                    <i class="fas fa-box"></i> Aprobacion de Inventarios
+                                </router-link>
+                            </li>
+                        </template>
+
+                        <template v-if="hasAdminRole || hasSuperRole">
+                            <li>
+                                <router-link to="/ComPrecio" class="dropdown-item">
+                                    <i class="fas fa-cogs"></i> Comparativo de Precio
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/getObservaciones" class="dropdown-item">
+                                    <i class="fas fa-exclamation-circle"></i> Estado de diferencias
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/powerBI" class="dropdown-item">
+                                    <i class="fas fa-chart-bar"></i> Reporte Completo
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/ComProducto" class="dropdown-item">
+                                    <i class="fas fa-box"></i> Comparativo de Productos
                                 </router-link>
                             </li>
 
-                            <!-- Estas rutas solo para ADMIN o SUPERVISOR -->
-                            <template v-if="hasAdminRole">
-                                <li>
-                                    <router-link to="/Toma" class="dropdown-item">
-                                        <i class="fas fa-upload"></i> Carga toma
-                                    </router-link>
-                                </li>
-                                <li>
-                                    <router-link to="/InsertInventariado" class="dropdown-item">
-                                        <i class="fas fa-users-cog"></i> Carga Inventario
-                                    </router-link>
-                                </li>
-                                <li>
-                                    <router-link to="/Aprobar" class="dropdown-item">
-                                        <i class="fas fa-box"></i> Aprobacion de Inventarios
-                                    </router-link>
-                                </li>
-                            </template>
+                        </template>
 
-                            <template v-if="hasAdminRole || hasSuperRole">
-                                <li>
-                                    <router-link to="/ComPrecio" class="dropdown-item">
-                                        <i class="fas fa-cogs"></i> Comparativo de Precio
-                                    </router-link>
-                                </li>
-                                <li>
-                                    <router-link to="/getObservaciones" class="dropdown-item">
-                                        <i class="fas fa-exclamation-circle"></i> Estado de diferencias
-                                    </router-link>
-                                </li>
-                                <li>
-                                    <router-link to="/powerBI" class="dropdown-item">
-                                        <i class="fas fa-chart-bar"></i> Reporte Completo
-                                    </router-link>
-                                </li>
-                                <li>
-                                    <router-link to="/ComProducto" class="dropdown-item">
-                                        <i class="fas fa-box"></i> Comparativo de Productos
-                                    </router-link>
-                                </li>
-                            
-                            </template>
-
-                        </ul>
-                    </transition>
+                    </ul>
+                </transition>
             </template>
 
             <!--------------------------------------------------------------------- Segundo botón del menú desplegable -->
@@ -169,11 +185,11 @@
                                 <i class="fas fa-id-card"></i> Datos personales de Almacén
                             </router-link>
                         </li>
-                        
-                            <router-link to="/Asistencia" class="dropdown-item">
-                                <i class="fas fa-toolbox"></i> Asistencia
-                            </router-link>
-                        
+
+                        <router-link to="/Asistencia" class="dropdown-item">
+                            <i class="fas fa-toolbox"></i> Asistencia
+                        </router-link>
+
                         <li v-if="hasAdminRole">
                             <router-link to="/Asistencia" class="dropdown-item">
                                 <i class="fas fa-toolbox"></i> Asistencia Almacen
@@ -219,11 +235,11 @@
                 <transition name="slide">
                     <ul v-if="isExpanded['otroSubmenu5']" class="dropdown-content">
                         <li>
-                             <router-link to="/ComPrecio" class="dropdown-item">
+                            <router-link to="/ComPrecio" class="dropdown-item">
                                 <i class="fas fa-cogs"></i> Comparativo de Precio
                             </router-link>
                         </li>
-                         <li>
+                        <li>
                             <router-link to="/Aprobar" class="dropdown-item">
                                 <i class="fas fa-box"></i> Aprobacion de Inventarios
                             </router-link>
@@ -232,7 +248,6 @@
                     </ul>
                 </transition>
             </template>
-
 
             <button class="logout-button" @click="logout">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -263,10 +278,16 @@ import {
     mapState
 } from 'vuex';
 import config from "@/config";
+import { show_alerta } from '@/funciones.js'; // Nota: @/ apunta a la carpeta src/
+
 
 export default {
     data() {
         return {
+            nuevaSucursal: '',
+            cargando: false,
+            mensaje: '',
+            mensajeExito: false,
             isExpanded: {
                 tomaSubmenu: true,
                 otroSubmenu: false,
@@ -344,9 +365,19 @@ export default {
             ]
         };
     },
+    props: {
+        hasAdminRole: {
+            type: Boolean,
+            default: false
+        },
+        rolDisplayName: {
+            type: String,
+            default: ''
+        }
+    },
     computed: {
         ...mapState(['rol']),
-        
+
         rolDisplayName() {
             if (Array.isArray(this.rol)) {
                 return this.rol.join(', ').replace('ROLE_', '');
@@ -395,6 +426,51 @@ export default {
         window.removeEventListener('resize', this.checkMobile);
     },
     methods: {
+
+        async cambiarSucursal() {
+            if (!this.nuevaSucursal) {
+                show_alerta('Seleccione un centro', 'warning');
+                return;
+            }
+
+            // Mostrar indicador de carga
+            this.cargando = true; // Debes agregar esta propiedad a tu data()
+
+            try {
+                // Usando fetch correctamente
+                const response = await fetch(`${config.BASE_URL}/api/user/sucursal`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        sucursal: this.nuevaSucursal
+                    })
+                });
+
+                // Obtener la respuesta como texto
+                const resultado = await response.text();
+                console.log('Respuesta del servidor:', response.status, resultado);
+
+                if (response.ok) {
+                    show_alerta('Centro actualizado correctamente', 'success');
+
+                    // Esperar un momento para que el usuario vea el mensaje de éxito
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    show_alerta('Error: ' + resultado, 'error');
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                show_alerta('Error de conexión: ' + error.message, 'error');
+            } finally {
+                this.cargando = false;
+            }
+        },
+
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
         },
@@ -783,5 +859,56 @@ export default {
     .toggle-sidebar-btn {
         display: none;
     }
+}
+
+/* estulo de cambio de sucursal */
+.center-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.change-center {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.select-compact {
+    padding: 2px 5px;
+    border: 1px solid #0c534c;
+    border-radius: 3px;
+    font-size: 12px;
+    height: 25px;
+}
+
+.btn-compact {
+    padding: 2px 8px;
+    background-color: #007bff;
+    color: 0c534c;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    height: 25px;
+}
+
+.msg {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+.msg-success {
+    color: #155724;
+    background-color: #0c534c;
+}
+
+.msg-error {
+    color: #721c24;
+    background-color: #0c534c;
 }
 </style>

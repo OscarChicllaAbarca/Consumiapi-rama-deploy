@@ -39,7 +39,9 @@
 
             <div class="form-group">
                 <label for="observacion">Observación:</label>
-                <textarea id="observacion" v-model="observacion" placeholder="Ingrese una observación (opcional)" class="modal-textarea" rows="4"></textarea>
+                <textarea id="observacion" v-model="observacion" placeholder="Ingrese una observación (opcional)
+                
+                " class="modal-textarea" rows="4"></textarea>
             </div>
 
             <div class="terminos-contenido">
