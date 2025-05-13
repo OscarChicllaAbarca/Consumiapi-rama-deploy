@@ -49,6 +49,7 @@
                 <div class="terminos-texto">
                     <p>Al aceptar estos términos y condiciones, usted confirma que:</p>
                     <ul>
+                        <li style="color: red; font-weight: bold;">Una vez enviado, no se aceptarán correcciones. Verifique que todo esté completo y justificado.</li>
                         <li>Ha revisado cuidadosamente todos los datos presentados en el inventario.</li>
                         <li>Comprende que esta aceptación es final y no se pueden realizar cambios posteriores.</li>
                         <li>Se compromete a mantener la confidencialidad de la información.</li>
@@ -98,6 +99,8 @@ import axios from 'axios';
 import config from '../config';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { show_alerta } from '@/funciones.js'; // Nota: @/ apunta a la carpeta src/
+
 
 export default {
     name: 'TerminosCondicionesModal',

@@ -10,24 +10,47 @@
                 <div class="user-role">
                     <p>ROL: {{ rolDisplayName }}</p>
                 </div>
-
+                <br>
                 <div v-if="hasAdminRole">
                     <div class="user-role">
                         <div class="center-display">
-                            <div class="change-center">
-                                <select v-model="nuevaSucursal" class="select-compact">
-                                    <option value="">Cambiar centro</option>
-                                    <option value="C152">Victoria</option>
-                                    <option value="C040">Arequipa</option>
-                                    <option value="C080">Cuzco</option>
-                                    <option value="C200">Piura</option>
-                                    <option value="C154">Lurin</option>
-                                </select>
-                                <button @click="cambiarSucursal" class="btn-compact" :disabled="cargando">
-                                    {{ cargando ? 'Actualizando...' : 'Camb. Sucursal' }}
-                                </button>
-                            </div>
+                            <!-- Mostrar sucursal actual con animación de entrada -->
+                            <transition name="fade">
+                                <div v-if="sucursalActual && !mostrarSelector" class="sucursal-actual">
+                                    <span>Sucursal:</span>
+                                    <strong>{{ obtenerNombreSucursal(sucursalActual) }}</strong>
+                                    <button @click="mostrarSelector = true" class="btn-compact">
+                                        <span>Cambiar</span>
+                                    </button>
+                                </div>
+                            </transition>
 
+                            <!-- Selector de sucursal con animación -->
+                            <transition name="fade">
+                                <div v-if="!sucursalActual || mostrarSelector" class="change-center">
+                                    <select v-model="nuevaSucursal" class="select-compact" :class="{ 'select-active': nuevaSucursal }">
+                                        <option value="">Seleccionar centro</option>
+                                        <option value="C152">Victoria</option>
+                                        <option value="C040">Arequipa</option>
+                                        <option value="C080">Cuzco</option>
+                                        <option value="C200">Piura</option>
+                                        <option value="C154">Lurin</option>
+                                    </select>
+                                    <button @click="cambiarSucursal" class="btn-compact" :class="{ 'cargando': cargando }" :disabled="cargando || !nuevaSucursal">
+                                        {{ cargando ? 'Actualizando...' : 'Confirmar' }}
+                                    </button>
+                                    <button v-if="mostrarSelector" @click="cancelarSeleccion" class="btn-compact btn-cancelar">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </transition>
+
+                            <!-- Mensaje de estado -->
+                            <transition name="fade">
+                                <div v-if="mensaje" :class="['msg', `msg-${tipoMensaje}`]">
+                                    {{ mensaje }}
+                                </div>
+                            </transition>
                         </div>
                     </div>
                 </div>
@@ -278,15 +301,19 @@ import {
     mapState
 } from 'vuex';
 import config from "@/config";
-import { show_alerta } from '@/funciones.js'; // Nota: @/ apunta a la carpeta src/
-
+import {
+    show_alerta
+} from '@/funciones.js'; // Nota: @/ apunta a la carpeta src/
 
 export default {
     data() {
         return {
             nuevaSucursal: '',
             cargando: false,
+            sucursalActual: '',
+            mostrarSelector: false,
             mensaje: '',
+            tipoMensaje: 'success',
             mensajeExito: false,
             isExpanded: {
                 tomaSubmenu: true,
@@ -425,19 +452,46 @@ export default {
     unmounted() {
         window.removeEventListener('resize', this.checkMobile);
     },
+    mounted() {
+        this.obtenerSucursalActual();
+    },
     methods: {
+        obtenerNombreSucursal(codigo) {
+            const sucursales = {
+                'C152': 'Victoria',
+                'C040': 'Arequipa',
+                'C080': 'Cuzco',
+                'C200': 'Piura',
+                'C154': 'Lurin'
+            };
 
+            return sucursales[codigo] || codigo;
+        },
+        async obtenerSucursalActual() {
+            try {
+                const response = await fetch(`${config.BASE_URL}/api/user/sucursal`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.sucursalActual = data.sucursal;
+                }
+            } catch (error) {
+                console.error('Error al obtener sucursal:', error);
+
+            }
+        },
         async cambiarSucursal() {
             if (!this.nuevaSucursal) {
-                show_alerta('Seleccione un centro', 'warning');
                 return;
             }
 
-            // Mostrar indicador de carga
-            this.cargando = true; // Debes agregar esta propiedad a tu data()
+            this.cargando = true;
+            this.mensaje = '';
 
             try {
-                // Usando fetch correctamente
                 const response = await fetch(`${config.BASE_URL}/api/user/sucursal`, {
                     method: 'PUT',
                     headers: {
@@ -449,36 +503,39 @@ export default {
                     })
                 });
 
-                // Obtener la respuesta como texto
                 const resultado = await response.text();
                 console.log('Respuesta del servidor:', response.status, resultado);
 
                 if (response.ok) {
-                    show_alerta('Centro actualizado correctamente', 'success');
 
-                    // Esperar un momento para que el usuario vea el mensaje de éxito
+                    this.sucursalActual = this.nuevaSucursal;
+                    this.mostrarSelector = false;
+
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
                 } else {
-                    show_alerta('Error: ' + resultado, 'error');
+
                 }
             } catch (error) {
                 console.error('Error completo:', error);
-                show_alerta('Error de conexión: ' + error.message, 'error');
+
             } finally {
                 this.cargando = false;
             }
         },
-
+        cancelarSeleccion() {
+            this.mostrarSelector = false;
+            this.nuevaSucursal = '';
+            this.mensaje = '';
+        },
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
         },
         toggleMenu(menuKey) {
-            // En Vue 3 ya no necesitamos $set, simplemente actualizamos directamente la propiedad
+
             this.isExpanded[menuKey] = !this.isExpanded[menuKey];
 
-            // Si quieres cerrar los otros menús cuando abres uno, puedes hacer esto:
             if (this.isExpanded[menuKey]) {
                 for (const key in this.isExpanded) {
                     if (key !== menuKey) {
@@ -839,7 +896,6 @@ export default {
     .content-wrapper {
         margin-left: 0;
         padding-bottom: 70px;
-        /* Espacio para el navbar móvil */
     }
 
     .sidebar {
@@ -873,42 +929,81 @@ export default {
 .change-center {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
 }
 
 .select-compact {
-    padding: 2px 5px;
-    border: 1px solid #0c534c;
-    border-radius: 3px;
-    font-size: 12px;
-    height: 25px;
+    padding: 4px 8px;
+    border: 2px solid #0c534c;
+    border-radius: 4px;
+    font-size: 13px;
+    height: 30px;
+    background-color: #0c534c;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.select-compact:hover {
+    border-color: #18584c;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.select-compact:focus {
+    border-color: #18584c;
+    box-shadow: 0 0 0 3px rgba(12, 83, 76, 0.2);
 }
 
 .btn-compact {
-    padding: 2px 8px;
-    background-color: #007bff;
-    color: 0c534c;
+    padding: 4px 12px;
+    background-color: #296d60;
+    color: white;
     border: none;
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
-    height: 25px;
+    font-size: 13px;
+    height: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.msg {
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    margin-left: 5px;
+.btn-compact:hover {
+    background-color: #296d60;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
-.msg-success {
-    color: #155724;
-    background-color: #0c534c;
+.btn-compact:active {
+    transform: translateY(0);
 }
 
-.msg-error {
-    color: #721c24;
-    background-color: #0c534c;
+.sucursal-actual {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.btn-compact.btn-cancelar {
+    background-color: #dc3545;
+}
+
+.btn-compact.btn-cancelar:hover {
+    background-color: #c82333;
+}
+
+.btn-compact:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 </style>

@@ -65,3 +65,12 @@ export function tieneRol(rolRequerido) {
   }
 
 
+export function formatearPrecio(precio) {
+    if (precio == null || isNaN(precio)) {
+        return '0.00';
+    }
+    return new Intl.NumberFormat('es-PE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(precio);
+}
