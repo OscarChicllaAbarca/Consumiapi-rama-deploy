@@ -22,9 +22,10 @@ import RecoverAccessView from '@/views/RecoverAccessView.vue';
 import AprovacionView from '@/views/AprovacionView.vue';
 import { Path } from 'three';
 import axios from "axios";
-import config from "@/config"; // Ajusta la ruta de tu configuración
+import config from "@/config"; 
 import store from '@/store'; 
-
+import AdminAsistencia from '@/views/AdminAsistencia.vue';
+import UserAsistencia from '@/views/UserAsistencia.vue';
 
 
 const routes = [
@@ -139,6 +140,16 @@ const routes = [
   path: '/ComProducto',
   name: 'ComProducto',
   component: ComProductoView,meta:{requiresAuth: true }
+  },
+  {
+  path: '/AdminAsistencia',
+  name: 'AdminAsistencia',
+  component: AdminAsistencia,meta:{requiresAuth: true }
+  },
+  {
+  path: '/UserAsistencia',
+  name: 'UserAsistencia',
+  component: UserAsistencia,meta:{requiresAuth: true }
   }
 ];
 

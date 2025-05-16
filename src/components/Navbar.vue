@@ -139,6 +139,11 @@
                                     <i class="fas fa-box"></i> Aprobacion de Inventarios
                                 </router-link>
                             </li>
+                            <li>
+                                <router-link to="/AdminAsistencia" class="dropdown-item">
+                                    <i class="fas fa-box"></i> Aprobacion de Horas Extras
+                                </router-link>
+                            </li>
                         </template>
 
                         <template v-if="hasAdminRole || hasSuperRole">
@@ -208,16 +213,15 @@
                             </router-link>
                         </li>
 
-                        <router-link to="/Asistencia" class="dropdown-item">
+                        <router-link to="/UserAsistencia" class="dropdown-item">
                             <i class="fas fa-toolbox"></i> Asistencia
                         </router-link>
 
                         <li v-if="hasAdminRole">
-                            <router-link to="/Asistencia" class="dropdown-item">
+                            <router-link to="/UserAsistencia" class="dropdown-item">
                                 <i class="fas fa-toolbox"></i> Asistencia Almacen
                             </router-link>
                         </li>
-
                     </ul>
                 </transition>
             </template>
@@ -452,7 +456,7 @@ export default {
         window.removeEventListener('resize', this.checkMobile);
     },
     mounted() {
-       
+
     },
     methods: {
         obtenerNombreSucursal(codigo) {
@@ -466,7 +470,7 @@ export default {
 
             return sucursales[codigo] || codigo;
         },
-        
+
         async cambiarSucursal() {
             if (!this.nuevaSucursal) {
                 return;
